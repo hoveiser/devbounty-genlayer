@@ -1,23 +1,35 @@
 {
-  "note": "Both DevBounty instances deployed to GenLayer studionet by the genlayer CLI (v0.39.2) from account 0x3de43AA2f7162c80af98abe78222aE0Cdf83c506; consensus validator set and votes visible via the explorer JSON API on each deploy tx.",
+  "note": "DevBounty instances deployed to GenLayer studionet from account 0x3de43AA2f7162c80af98abe78222aE0Cdf83c506 (genlayer CLI v0.39.2 or genlayer-py deploy_contract); consensus validator set and votes visible via the explorer JSON API on each deploy tx. The 0x6b81/0x9e76 instances predate the Sep 27 security audit (PR-authorship claim + reclaim-race fixes) and are kept as historical evidence; the audited instances are 0xADA3 (live demo + frontend) and 0x96f2 (integration test).",
   "deployments": [
     {
-      "role": "first deployment — used for the genuine REJECTION demo",
+      "role": "audited contract powering the live demo scenarios A/B and the GitHub Pages frontend",
+      "contract": "0xADA36bF3F8f0d147B03f7D02B3778746CFCBfCeB",
+      "deploy_tx": "0x3e83c1291b76d452104a140f453a7828a3a17204d10c72c0eedfd6dbd8ecf5dd",
+      "consensus": "FINALIZED, 5 validator votes in explorer JSON"
+    },
+    {
+      "role": "audited contract deployed by the gltest integration test (tests/integration/, second run)",
+      "contract": "0x96f2582c2Bc9202e8EEe7839e7dcb5DbfD57b571",
+      "deploy_tx": "0x6662dcdc5bceb5421afacad589d531b0f44ed5342d13fe3b1d92bd65749b1c48",
+      "consensus": "FINALIZED, 5 validator votes in explorer JSON"
+    },
+    {
+      "role": "pre-audit — used for the genuine REJECTION demo (historical)",
       "contract": "0x9e76323f5c917af4A8931e0F8239183CADdF9D7f",
       "deploy_tx": "0x4b8b8c09e5d80e57a116873fc9b385a5a0225d200ec327af35e797f2d395898a",
       "consensus": "result MAJORITY_AGREE, 5 validators"
     },
     {
-      "role": "clean instance for the happy-path live flow",
+      "role": "pre-audit — first happy-path live flow (historical; the Pages frontend pointed here until the audit)",
       "contract": "0x6b810DA81489834e383349187753ea1D0A9965A3",
       "deploy_tx": "0xcdb3e992ae526cb3c1d18ba8ea88bc99f0790573066ed10c5e2f1dfe76cd0360",
       "consensus": "result MAJORITY_AGREE, 5 validator votes in explorer JSON"
     },
     {
-      "role": "instance deployed by the gltest integration test (tests/integration/)",
+      "role": "pre-audit instance deployed by the first gltest integration run (historical)",
       "contract": "0xA59aFBa5fc9A3D03607efDbD9d180aFE98019f77",
       "deploy_tx": null,
-      "consensus": "deploy reached FINALIZED via gltest; see evidence/integration_studionet.json for the flow tx hashes"
+      "consensus": "deploy reached FINALIZED via gltest; see evidence/integration_studionet.json for the current (audited) run"
     }
   ],
   "explorer_json_api": "https://studio.genlayer.com/api/explorer/transactions/<tx_hash>  (send a non-default User-Agent; the WAF 403s Python-urllib's default)",

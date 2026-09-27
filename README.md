@@ -52,7 +52,7 @@ That is exactly the setting where a single off-chain oracle is exploitable:
 
 | Layer | What it decides | Equivalence principle |
 |---|---|---|
-| **Facts** | issue exists & is an issue · PR number matches URL · PR targets bounty repo · PR merged · targets default branch · contains real changes | `gl.eq_principle.strict_eq` over a JSON summary of **only stable GitHub fields** (`number`, `merged`, `base.repo.full_name`, `base.ref`, `additions`, file list). Volatile fields (`updated_at`, reaction/comment counts) are never extracted, so edits can't break equivalence; a mid-verification edit just causes disagreement → rotation, never a wrong verdict. |
+| **Facts** | issue exists & is an issue · PR number matches URL · PR targets bounty repo · PR merged · targets default branch · contains real changes · **payout address claimed by the PR author for this bounty** | `gl.eq_principle.strict_eq` over a JSON summary of **only stable GitHub fields** (`number`, `merged`, `base.repo.full_name`, `base.ref`, `additions`, file list, PR author login + the author's own claim comments). Volatile fields (`updated_at`, reaction/comment counts) are never extracted, so edits can't break equivalence; a mid-verification edit just causes disagreement → rotation, never a wrong verdict. |
 | **Judgment** | "does the diff substantively resolve the issue?" — inherently subjective | genuine **comparative validator** via `gl.vm.run_nondet_unsafe`: the validator **independently repeats the whole fetch + `exec_prompt`** and compares the stable `decision` field plus token-overlap on `reasons`. LLM misbehavior is classified `[LLM]` and **always disagrees** (forces rotation). Error taxonomy: `[EXPECTED]`/`[EXTERNAL]` match exactly, `[TRANSIENT]` agrees-if-both. |
 
 Merged-PR rule (documented choice): the PR is considered **merged** iff the
@@ -64,17 +64,18 @@ GitHub API reports `merged: true` **and** its base branch equals the repo's
 ```
  poster                     contributor                  GenLayer studionet
 ┌──────────┐  GEN (native)  ┌──────────┐   GitHub API   ┌─────────────────────────────┐
-│ create & │───────────────>│ submit   │<──────────────>│ DevBounty intelligent       │
-│ fund     │  create_bounty │  merged  │  fetched by    │ contract                    │
-│ bounty   │  @payable      │  PR +    │  leader AND    │  TreeMap<id, Bounty>        │
-└──────────┘                │  payout  │  every         │  append-only history        │
-     │  reclaim_after_      │  address │  validator     └──────────────┬──────────────┘
-     │  timeout (deadline   └────┬─────┘                verify_resolution:
-     │  via gl.message_raw)      │ submit_pr                    │
-     ▼                           ▼                   ┌──────────┴───────────┐
- poster ◄── EthSend ── escrow   payout EOA ◄── EthSend ── on APPROVED       │
- reclaims                       (never on REJECTED)   strict_eq facts ──────┤
-                                                       comparative LLM ─────┘
+│ create & │───────────────>│ post PR- │<──────────────>│ DevBounty intelligent       │
+│ fund     │  create_bounty │ author   │  fetched by    │ contract                    │
+│ bounty   │  @payable      │ claim +  │  leader AND    │  TreeMap<id, Bounty>        │
+└──────────┘                │ submit   │  every         │  append-only history        │
+     │  reclaim_after_      │  merged  │  validator     └──────────────┬──────────────┘
+     │  timeout (open/      │  PR +    │                   verify_resolution:
+     │  rejected only,      │  payout  │                   strict_eq facts + claim ─┤
+     │  never under a live  │  address │                   comparative LLM ─────────┘
+     │  submission)         └────┬─────┘                                │
+     ▼                           ▼                                       │
+ poster ◄── EthSend ── escrow   payout EOA ◄── EthSend ── on APPROVED ───┘
+ reclaims                       (never on REJECTED)
  frontend (genlayer-js) ── reads get_bounty / get_evidence / list_bounties / stats
                        ── live tx lifecycle: SUBMITTED→PENDING→ACCEPTED→FINALIZED
 ```
@@ -104,47 +105,73 @@ issue **#1** documents an off-by-one in `sum_range`; **PR #2** (merged, squash)
 fixes it and adds regression tests; **PR #3** (merged) is a decorative README
 ASCII banner *deliberately unrelated* to the issue.
 
-### Scenario A — genuine fix pays out (contract `0x6b81…65A3`)
+Both scenarios below run against the **security-audited** deployment
+(`0xADA3…fCeB`) and include the PR-author claim comment step of the
+authorship mitigation.
+
+### Scenario A — genuine fix pays out (audited contract `0xADA3…fCeB`)
 
 | step | tx | explorer verdict |
 |---|---|---|
-| deploy | `0xcdb3e992…5898a` | FINALIZED · `MAJORITY_AGREE` |
-| `create_bounty` **with 2 GEN native value** | `0xba17878405…5a671` | FINALIZED · votes all `agree` · `value_credited: true` |
-| `submit_pr` (PR #2 + fresh payout EOA) | `0x280d65b1…4cd6` | FINALIZED |
-| `verify_resolution` | `0x26562fd0…78e7` | FINALIZED |
+| deploy | `0x3e83c129…f5dd` | FINALIZED · 5 validator votes |
+| `create_bounty` **with 2 GEN native value** | `0x057dc2c3…4b2e` | FINALIZED · votes all `agree` |
+| PR-author claim comment on PR #2 (GitHub side, `bounty 000001 payout 0x7319…Cd5f`) | — | visible on the public PR |
+| `submit_pr` (PR #2) | `0x2a611fca…8015` | FINALIZED |
+| `verify_resolution` | `0xc5a8a682…e51f` | FINALIZED |
 
 **Settlement proven against the recipient's balance, not a status field:**
-payout EOA `0x631A…1405` went `0 → 2000000000000000000` atto (delta exactly the
-escrowed 2 GEN). On-chain evidence stores the six deterministic checks, the LLM
-`decision: APPROVED` and its **reason list** ("range 1,n → 0,n+1", regression
-tests added, expected `sum_range(4)=10`, …) — visible in the frontend screenshot.
+payout EOA `0x7319…Cd5f` went `0 → 2000000000000000000` atto (delta exactly
+the escrowed 2 GEN). On-chain evidence stores the **seven** deterministic
+checks (six GitHub facts + `payout_claimed_by_pr_author`), the LLM
+`decision: APPROVED` and its **reason list** — visible in the live frontend.
 
-### Scenario B — merged-but-unsubstantive PR is rejected by the AI layer (contract `0x9e76…9D7f`)
+### Scenario B — merged-but-unsubstantive PR is rejected by the AI layer (same audited contract, bounty `000002`)
 
-Bounty `000001` (funded, 2 GEN locked) for the same issue; contributor submits
-**PR #3** (README banner).
+Fresh 2 GEN bounty; contributor claims + submits **PR #3** (README banner).
 
 | step | tx | result |
 |---|---|---|
-| `submit_pr` | `0x5795b9ef…c502` | FINALIZED |
-| `verify_resolution` | `0xbd06d054…8cb0` | FINALIZED |
+| `create_bounty` (2 GEN) | `0x1e0e2ed8…f756` | FINALIZED |
+| claim comment + `submit_pr` | `0xd8bdad10…7096` | FINALIZED |
+| `verify_resolution` | `0x2cfdf1ba…848b` | FINALIZED |
 
-On-chain evidence: **all six deterministic checks ✓** (right repo ✓, merged ✓,
-default branch ✓, real diff ✓) — and the consensus LLM still returned
-`REJECTED`: *“pr modifies only readme.md with an ascii banner; no changes to
-math_utils.py bounds or addition of test_math_utils.py as required by the
-issue.”* Recipient balance delta: **0**. The escrow stayed locked for appeal or
-reclaim. **This is the proof that the AI judgment layer — not a checkbox — is
-doing the settlement work every validator independently agreed on.**
+On-chain evidence: **all seven deterministic checks ✓** (right repo ✓, merged
+✓, default branch ✓, real diff ✓, **author-claimed payout ✓**) — and the
+consensus LLM still returned `REJECTED`: *“the pull request does not address
+the issue described … the pr only adds an ascii banner; no changes were made
+to math_utils.py or any test files as requested by the issue.”* Recipient
+balance delta: **0**. **This is the proof that the AI judgment layer — not a
+checkbox — is doing the settlement work every validator independently agreed
+on**, and that passing the claim check does not buy an approval.
 
 ### Scenario C — the same story through the official gltest harness
 
 `tests/integration/test_studionet_flow.py` passed against real consensus
-(contract `0xA59a…f77`, recorded in
+(audited contract `0x96f2…b571`, deploy tx `0x6662dcdc…1c48`, recorded in
 [`evidence/integration_studionet.json`](evidence/integration_studionet.json)):
-create `0x0f0f1bb7…27edf` · submit `0x92db3554…80e39` · verify
-`0x675d0c5a…f96713`, all FINALIZED, verdict APPROVED, payout EOA balance
-`0 → 1000000000000000000` atto asserted.
+create `0x1b20fc5a…0616` · claim comment + submit `0x9012a6ea…257b` · verify
+`0x1a85ecee…ca50`, all FINALIZED, verdict APPROVED, the exact seven-check
+set asserted by name, payout EOA balance `0 → 1000000000000000000` atto.
+
+## Security audit — gaps, fixes, proof
+
+Every item below was resolved with a **test that fails on the vulnerable
+behavior and passes on the fixed one** (run against the pre-fix contract to
+confirm the failure first, where applicable). Proof tests live in
+[`tests/direct/test_security_audit.py`](tests/direct/test_security_audit.py).
+
+| # | Question | Verdict before | What was done | Proof |
+|---|---|---|---|---|
+| 1 | Does `create_bounty` enforce value == reward? | **Not a gap — impossible by construction.** There is no declared-reward parameter: `reward := gl.message.value`. "Promise 2 GEN, send 1 GEN" cannot be expressed; value can only *be* the promise. `value > 0` is enforced. | Documented; exact odd-value round-trips and the "submit_pr cannot touch reward" invariant pinned by tests. | `test_reward_is_exactly_the_sent_value`, `test_create_requires_value` |
+| 2 | PR-authorship race — can an opportunist front-run `submit_pr` and steer the reward to their own wallet? | **REAL GAP (as originally designed).** `submit_pr` accepted any caller + any payout address. | **Implemented mitigation (option b — author-side claim):** the PR author posts `devbounty-claim: bounty <id> payout <addr>` on the PR from their own GitHub account; the deterministic layer fetches the PR's author login and the PR's comments (both under `strict_eq`) and requires a comment **authored by the PR author**, naming **this bounty id** (digit-boundary checked) and **the registered payout address** (bounded 40-hex token match). Any wallet may still *call* `submit_pr` — it can only ever register an address the author already claimed, so front-running moves nothing. Residual risk, stated honestly: the mitigation anchors wallet↔author binding to GitHub account integrity (a compromised author account, or an author who claims to a stolen-for address, is outside what any oracle can verify); claims are bounty-id-bound per contract instance but not replay-proof across *different* bounty contracts reusing the same PR — which is harmless because a replay can only pay the address the author themselves chose. | `test_frontrunner_cannot_steer_payout_to_own_wallet`, `test_real_author_flow_pays_despite_third_party_submitter`, `test_claim_from_non_author_does_not_count`, `test_claim_for_different_bounty_does_not_transfer`, `test_claim_for_longer_bounty_id_does_not_match`, `test_overlong_hex_token_is_not_a_valid_claim` |
+| 3 | Double submission / double payout after PAID/REJECTED? | **Not a gap — state machine is closed.** `verify_resolution` only from `submitted`; `submit_pr` only from `open`/`rejected`; PAID and RECLAIMED are terminal. `b.status = "paid"` is written **before** `_emit_payout`, and GenLayer applies one tx's storage writes atomically at consensus — no intra-block re-entry window. | Hardened the *proof*, not the code: sequences asserting every re-entry reverts and exactly one `EthSend` is ever recorded; network runs prove single payout via recipient balance delta == reward, once. | `test_double_payout_is_impossible_on_a_settled_bounty`, `test_double_submission_while_pending_reverts`, `test_rejected_bounty_can_be_resubmitted_and_pays_once` |
+| 4 | Reclaim/appeal race — can the poster pull escrow out from under an in-flight or successful verification? | **REAL GAP.** `reclaim_after_timeout` accepted status `submitted`: past the deadline the poster could reclaim while a legit PR sat awaiting verification, stranding the contributor. (Post-settlement reclaim was already blocked; appeal was already one-shot from `rejected` only.) | **Fixed:** reclaim is allowed only from `open` or `rejected`. To close the *inverse* lock this creates (a griefer submitting a soon-to-404 PR keeping the bounty forever `submitted` and un-reclaimable), vanished issues/PRs now **settle as deterministic REJECTION** instead of reverting forever (tolerant 404 fact fetch) — so escrow can be neither stolen from a live submission nor frozen by a dead one. | `test_reclaim_blocked_while_submission_in_flight`, `test_vanished_pr_settles_rejected_instead_of_locking_escrow`, `test_reclaim_after_rejection_and_deadline_still_works`, `test_appeal_race_after_paid_is_closed` (+ older `test_reclaim_after_timeout`) |
+| 5 | Spam/griefing — trivial bounties to burn others' time/gas? | **Low severity, by design — no code fix (stated honestly).** Creating a bounty costs the poster *real escrow* (`value > 0`, their own GEN) which they can only recover via reclaim after their own chosen deadline — griefing capital is tied up, not free. And nobody is forced to trigger `verify_resolution`: it's called by an interested party (contributor/front-runner/appealer), never by the poster, so "burning gas on AI verifications" only ever burns the verifier's own gas on a bounty they *want* settled. The remaining cost imposed on third parties is list pollution (bounded: `list_bounties` paginates at 100), and validator attention during consensus rounds — inherent to any open bounty board. A deposit-with-slashing scheme was considered and rejected as over-engineering for this threat. | README note (this row); no test needed. |
+
+The audit surfaced one design invariant worth restating: **any wallet may call
+`submit_pr`, but only the PR author's GitHub account can decide where its
+reward goes.** That is what makes the race mitigation composable with the
+permissionless verification model.
 
 ## Repository layout
 
@@ -153,9 +180,14 @@ contracts/DevBounty.py            the intelligent contract (pinned runner header
 frontend/                          plain HTML/CSS/JS dapp using genlayer-js (real SDK, see below)
 frontend/build.mjs                 esbuild wrapper: bakes CONTRACT_ADDRESS into the bundle
 .github/workflows/deploy-pages.yml CI: build frontend → deploy to GitHub Pages on every push to main
-tests/direct/                      14 Direct-Mode unit tests (mocked GitHub/LLM) incl. injection test
+tests/direct/test_devbounty.py     14 Direct-Mode unit tests (mocked GitHub/LLM) incl. injection test
+tests/direct/test_security_audit.py 14 security-audit proof tests (authorship race, reclaim race,
+                                   double-payout sequences, exact-value invariants)
+tests/direct/devbounty_gh_mocks.py GitHub API mock helpers (incl. claim comments, 404 status overrides)
 tests/integration/                 gltest flow against REAL studionet consensus (no stubs)
 scripts/live_flow.py               the live scenario runner whose output is evidence/live_flow.json
+scripts/github_claim.py            posts the real PR-author claim comment (used by live_flow + integration)
+scripts/deploy_contract.py         SDK deploy to studionet + explorer FINALIZED poll
 scripts/verify_evidence.py         re-verifies every recorded hash against the explorer JSON API
 evidence/                          deployments.json, live_flow.json, integration_studionet.json, run states
 artifacts/                         frontend screenshot
@@ -169,11 +201,14 @@ python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
 # CLI (deploy/interact):  npm install -g genlayer   (v0.39.2 used here)
 
 # .env (gitignored): GENLAYER_PRIVATE_KEY=0x…   (never logged/committed)
+#                        GITHUB_TOKEN=ghp_…     (only for live_flow/integration: posts the
+#                        PR-author claim comment from the demo repo's author account)
 
 genvm-lint check contracts/DevBounty.py         # lint + validate
-pytest tests/direct/ -v                          # 14 tests, no network needed
+pytest tests/direct/ -v                          # 28 tests, no network needed
 
-# live flow on studionet (scenarios are resumable, state in evidence/):
+# live flow on studionet (scenarios are resumable, state in evidence/; both modes
+# share one contract and include the claim-comment step):
 .venv/bin/python scripts/live_flow.py --mode approve --contract <addr>
 .venv/bin/python scripts/live_flow.py --mode reject  --contract <addr>
 
@@ -183,8 +218,8 @@ pytest tests/direct/ -v                          # 14 tests, no network needed
 # frontend (local)
 cd frontend && npm install && npm run build && python3 -m http.server 8765
 # open http://localhost:8765 — reads live state from the deployed contract
-# npm run build bakes in CONTRACT_ADDRESS (defaults to the live 0x6b81…65A3;
-# the Pages deploy workflow passes it explicitly).
+# npm run build bakes in CONTRACT_ADDRESS (defaults to the live audited
+# 0xADA3…fCeB; the Pages deploy workflow passes it explicitly).
 
 # deployed copy: https://hoveiser.github.io/devbounty-genlayer/
 # pushed to main → .github/workflows/deploy-pages.yml rebuilds and redeploys
@@ -282,10 +317,12 @@ Tooling / network layer:
 
 ## What each test tier proves — and doesn't
 
-* **Direct Mode** (`pytest tests/direct/`, 14 passing): business logic, access
+* **Direct Mode** (`pytest tests/direct/`, 28 passing): business logic, access
   control, guards, evidence shape, sanitizer + injection fail-closed, payout
   *emission* (EthSend recorded via hook), validator **comparison logic** via
-  manual `run_validator` captures (agree / decision-disagree / LLM-error-disagree).
+  manual `run_validator` captures (agree / decision-disagree / LLM-error-disagree),
+  and the 14 security-audit proofs (front-runner claim rejection, reclaim-during-
+  submission revert, double-payout sequences, tolerant-404 rejection).
   It cannot prove: VM-level `@payable` enforcement, real multi-validator
   consensus, real balance movement, real GitHub/LLM behavior — hence the live
   flows below.
@@ -303,6 +340,7 @@ Tooling / network layer:
 - [x] Storage: `TreeMap`/`DynArray`/`u256` atto/`str` statuses only; no Enum, no float money, no bare `Exception` (all `gl.vm.UserError` with error taxonomy).
 - [x] Non-deterministic fetch extracts **only stable fields**; equivalence split: `strict_eq` (facts) vs genuine comparative rerun (judgment), decision + reasons compared, `[LLM]` error ⇒ disagree.
 - [x] Injection sanitization + dedicated trap-mock test that fails closed.
+- [x] Security audit (5 corner cases) resolved with **failing/passing proof tests**, not reasoning: two real gaps fixed (PR-authorship claim binding; reclaim blocked while `submitted`, with 404-settles-rejected closing the inverse lock), two invariants proven (exact value, closed state machine), one accepted risk documented — see [Security audit](#security-audit--gaps-fixes-proof).
 - [x] Payable real on studionet: 2 GEN in (`value_credited: true`), payout asserted via recipient **balances** before/after in both scenarios (approve pays 2 GEN; reject pays 0).
 - [x] Frontend uses the actually-installed `genlayer-js` API and reads **only real on-chain state** (verified in-browser: live rows, evidence, reasons, lifecycle; screenshot in `artifacts/`). No indexer, no mocks.
 - [x] Every tx hash verifiable via explorer **JSON API**; verification is scripted (`scripts/verify_evidence.py` — one-liner per hash).

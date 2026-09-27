@@ -18,8 +18,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     # The live studionet deployment baked into the Pages bundle at build time
+    # (security-audited redeploy; the earlier 0x6b81… instance stays on-chain
+    # but predates the authorship-claim and reclaim-race fixes)
     env:
-      CONTRACT_ADDRESS: "0x6b810DA81489834e383349187753ea1D0A9965A3"
+      CONTRACT_ADDRESS: "0xADA36bF3F8f0d147B03f7D02B3778746CFCBfCeB"
     defaults:
       run:
         working-directory: frontend
@@ -43,6 +45,7 @@ jobs:
         run: |
           grep -q "$CONTRACT_ADDRESS" dist/app.js
           grep -q "https://studio.genlayer.com/api" dist/app.js
+          ! grep -q 0x6b810DA81489834e383349187753ea1D0A9965A3 dist/app.js
       - uses: actions/upload-pages-artifact@v3
         with:
           path: frontend/site

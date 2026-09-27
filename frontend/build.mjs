@@ -9,7 +9,7 @@ import { build } from 'esbuild';
 import { cpSync, mkdirSync } from 'node:fs';
 
 const CONTRACT_ADDRESS =
-  process.env.CONTRACT_ADDRESS ?? '0x6b810DA81489834e383349187753ea1D0A9965A3';
+  process.env.CONTRACT_ADDRESS ?? '0xADA36bF3F8f0d147B03f7D02B3778746CFCBfCeB';
 if (!/^0x[0-9a-fA-F]{40}$/.test(CONTRACT_ADDRESS)) {
   console.error(`CONTRACT_ADDRESS is not an EVM address: ${CONTRACT_ADDRESS}`);
   process.exit(2);

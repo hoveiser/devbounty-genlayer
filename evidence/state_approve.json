@@ -1,7 +1,8 @@
 {
-  "payout_address": "0x631A3231555E111D3455392cE117D06ddF5e1405",
-  "create_bounty": "0xba178784058c23483a9e3c397220c54d7778ac6c03c20398d11c46f5fe45a671",
+  "payout_address": "0x731916c53E726631A91fCA0D8224f5a810dFCd5f",
+  "create_bounty": "0x057dc2c36cc3d91d2ceab377bcb0c76523f082723b460982ab15caeac62b4b2e",
   "bid": "000001",
-  "submit_pr": "0x280d65b16513351fee7667f77f8fa91303667832802e57498a7abfeebd934cd6",
-  "verify_resolution": "0x26562fd08ba5bd373e5ebbb98c580e01f8a7e88bb6e134d9fba4e0061a2578e7"
+  "claim": "devbounty-claim: bounty 000001 payout 0x731916c53E726631A91fCA0D8224f5a810dFCd5f",
+  "submit_pr": "0x2a611fcaf41e1f9ee9370a51dd0cd48c0463120a4068848745ad79a13e3f8015",
+  "verify_resolution": "0xc5a8a682fbbd121244b16042ff5b2617af5af9488f6a466add8f02aa44a6e51f"
 }

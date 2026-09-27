@@ -18,7 +18,9 @@ REPO = "widgets"
 ISSUE_NO = "5"
 PR_NO = "77"
 PAYOUT = "0x1111111111111111111111111111111111111111"
+PR_AUTHOR = "alice-dev"
 PR_URL = f"https://github.com/{OWNER}/{REPO}/pull/{PR_NO}"
+CLAIM_BOUNTY_ID = "000001"
 
 BASE_ADDR = "0x2bd806c97f0e00af1a1fc3328fa763a9269723c8"
 
@@ -59,6 +61,7 @@ def pr_payload(
     number=77,
     body="Closes #5. Fixes the off-by-one and adds regression tests.",
     title="fix: off-by-one in paginate",
+    author=PR_AUTHOR,
 ):
     return {
         "number": number,
@@ -67,6 +70,7 @@ def pr_payload(
         "merged": merged,
         "additions": additions,
         "commits": 2,
+        "user": {"login": author},
         "base": {"repo": {"full_name": base_repo}, "ref": base_ref},
     }
 
@@ -94,33 +98,62 @@ def files_payload(count=2):
     ][: max(1, min(count, 2))]
 
 
+def claim_comment(login=PR_AUTHOR, bounty_id=CLAIM_BOUNTY_ID, payout=PAYOUT):
+    """A PR-author address claim in the canonical format the contract checks."""
+    return {
+        "user": {"login": login},
+        "body": f"devbounty-claim: bounty {bounty_id} payout {payout}",
+    }
+
+
+def default_claims():
+    # PR author claims the default PAYOUT address for the default bounty
+    return [claim_comment()]
+
+
+def http_status_payload(status, message="Not Found"):
+    return {"status": status, "body": json.dumps({"message": message})}
+
+
 def mock_github(
     direct_vm,
     issue=None,
     pr=None,
     meta=None,
     files=None,
+    claims=None,
     owner=OWNER,
     repo=REPO,
     issue_no=ISSUE_NO,
     pr_no=PR_NO,
+    issue_status=200,
+    pr_status=200,
 ):
-    """Register the four GitHub API mocks the contract fetches during verify.
+    """Register the five GitHub API mocks the contract fetches during verify.
 
     Patterns are anchored so /pulls/77/files cannot shadow /pulls/77.
+    issue_status/pr_status=404 simulates a vanished issue/PR.
     """
     o_r = f"/repos/{owner}/{repo}"
     direct_vm.mock_web(
         rf"{o_r}/issues/{issue_no}$",
-        {"status": 200, "body": json.dumps(issue or issue_payload())},
+        {"status": issue_status, "body": json.dumps(issue or issue_payload())}
+        if issue_status == 200
+        else http_status_payload(issue_status),
     )
     direct_vm.mock_web(
         rf"{o_r}/pulls/{pr_no}/files",
         {"status": 200, "body": json.dumps(files if files is not None else files_payload())},
     )
     direct_vm.mock_web(
+        rf"{o_r}/issues/{pr_no}/comments",
+        {"status": 200, "body": json.dumps(default_claims() if claims is None else claims)},
+    )
+    direct_vm.mock_web(
         rf"{o_r}/pulls/{pr_no}$",
-        {"status": 200, "body": json.dumps(pr or pr_payload())},
+        {"status": pr_status, "body": json.dumps(pr or pr_payload())}
+        if pr_status == 200
+        else http_status_payload(pr_status),
     )
     direct_vm.mock_web(
         rf"{o_r}$",

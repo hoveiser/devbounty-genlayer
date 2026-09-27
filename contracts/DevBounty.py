@@ -19,6 +19,11 @@ from dataclasses import dataclass
 #   - comparative layer    -> gl.vm.run_nondet_unsafe rerunning the full
 #     fetch + LLM judgment on the validator side, comparing the decision
 #     field and reason overlap. LLM errors always force disagreement.
+#
+# Payout authorship: submit_pr's caller is NOT trusted to route the reward.
+# The registered payout address must be claimed by the PR's own GitHub author
+# in a comment on the PR ("devbounty-claim: bounty <id> payout <addr>"),
+# verified deterministically in verify_resolution — see _claim_matches.
 # ---------------------------------------------------------------------------
 
 API_BASE = "https://api.github.com"
@@ -37,6 +42,8 @@ _PR_URL_RE = re.compile(
 _CTRL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 _OVERRIDE_RE = re.compile(r"(?i)\bignore\b[\s\S]{0,40}?\b(instructions?|rules?|directives?)\b")
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
+# bounded match: reject over-long hex runs like 0x + 41 chars
+_ADDR_TOKEN_RE = re.compile(r"0x[0-9a-fA-F]{40}(?![0-9a-fA-F])")
 
 
 def _addr_hex(a) -> str:
@@ -126,6 +133,37 @@ def _parse_pr_url(url: str) -> tuple:
     return m.group(1).lower(), m.group(2).lower(), m.group(3)
 
 
+# --- PR-authorship claim binding ---------------------------------------------
+#
+# Without this, an opportunist who spots a genuine merged fix could call
+# submit_pr first from their own wallet and register their own payout address,
+# stealing the reward from the real contributor. Mitigation (lightweight
+# "claim" step): the PR AUTHOR posts a comment on the PR — from their own
+# GitHub account — of the form:
+#
+#     devbounty-claim: bounty 000001 payout 0x<40-hex>
+#
+# The deterministic verification layer then requires that the registered
+# payout address was claimed by the PR's own author in a comment naming this
+# exact bounty. GitHub accounts are the identity anchor a blockchain cannot
+# re-check, but the comment must exist and must come from the PR author.
+
+
+def _claim_matches(comment_bodies: list, bounty_id: str, payout_addr: str) -> bool:
+    want = f"bounty {bounty_id.lower()}"
+    for body in comment_bodies:
+        text = str(body)
+        low = text.lower()
+        if want not in low:
+            continue
+        if low.index(want) + len(want) < len(low) and low[low.index(want) + len(want)] == "0":
+            continue  # "bounty 0000010" must not match bounty 000001
+        for tok in _ADDR_TOKEN_RE.findall(text):
+            if tok.lower() == payout_addr:
+                return True
+    return False
+
+
 # --- nondeterministic GitHub fetching (deterministic stable fields only) ----
 
 
@@ -147,6 +185,23 @@ def _gh_get(url: str) -> dict:
     return json.loads(res.body.decode("utf-8"))
 
 
+def _gh_get_or_none(url: str):
+    """_gh_get but maps a deterministic HTTP 404 to None instead of reverting.
+
+    A deleted/vanished issue or PR must settle as a deterministic REJECTION.
+    If it reverted forever instead, a griefer could lock escrow permanently by
+    submitting a 404-ing PR url (reclaim is blocked while a bounty is in
+    "submitted" state — see reclaim_after_timeout).
+    """
+    try:
+        return _gh_get(url)
+    except gl.vm.UserError as e:
+        msg = e.message if hasattr(e, "message") else str(e)
+        if "HTTP 404" in str(msg):
+            return None
+        raise
+
+
 def _trim(value: str, limit: int) -> str:
     return value if len(value) <= limit else value[:limit] + "~"
 
@@ -155,17 +210,31 @@ def _fetch_github_facts(owner: str, repo: str, issue_number: str, pr_number: str
     """strict_eq layer: leader and validator must extract identical stable data.
 
     Only stable fields are extracted — never comment counts, reaction counts,
-    updated_at, etc. Edits to issue/PR bodies between leader and validator
-    calls cause disagreement (rotation), not a wrong verdict.
+    updated_at, etc. Edits to issue/PR bodies or newly posted claim comments
+    between leader and validator calls cause disagreement (rotation), not a
+    wrong verdict. Authorship claim comments are pre-filtered to the PR
+    author's own comments so third-party comment spam cannot affect the set.
     """
 
     def call():
-        issue = _gh_get(f"{API_BASE}/repos/{owner}/{repo}/issues/{issue_number}")
-        pr = _gh_get(f"{API_BASE}/repos/{owner}/{repo}/pulls/{pr_number}")
-        meta = _gh_get(f"{API_BASE}/repos/{owner}/{repo}")
-        files_raw = _gh_get(
-            f"{API_BASE}/repos/{owner}/{repo}/pulls/{pr_number}/files?per_page=30"
+        issue = _gh_get_or_none(f"{API_BASE}/repos/{owner}/{repo}/issues/{issue_number}") or {}
+        pr = _gh_get_or_none(f"{API_BASE}/repos/{owner}/{repo}/pulls/{pr_number}") or {}
+        meta = _gh_get_or_none(f"{API_BASE}/repos/{owner}/{repo}") or {}
+        author = str((pr.get("user") or {}).get("login", "")).lower()
+        files_raw = (
+            _gh_get_or_none(
+                f"{API_BASE}/repos/{owner}/{repo}/pulls/{pr_number}/files?per_page=30"
+            )
+            or []
         )
+        claims = []
+        if pr and author:
+            comments = _gh_get_or_none(
+                f"{API_BASE}/repos/{owner}/{repo}/issues/{pr_number}/comments?per_page=50"
+            ) or []
+            for c in comments[:50]:
+                if str((c.get("user") or {}).get("login", "")).lower() == author:
+                    claims.append(_trim(str(c.get("body") or ""), 1200))
         files = []
         for f in files_raw[:25]:
             files.append(
@@ -190,6 +259,8 @@ def _fetch_github_facts(owner: str, repo: str, issue_number: str, pr_number: str
             "pr_base_ref": str(pr.get("base", {}).get("ref", "")),
             "pr_additions": int(pr.get("additions", 0)),
             "pr_commits": int(pr.get("commits", 0)),
+            "pr_author": author,
+            "claim_comments": claims,
             "default_branch": str(meta.get("default_branch", "")),
             "files": files,
         }
@@ -521,6 +592,11 @@ class DevBounty(gl.Contract):
             ("pr_merged", facts["pr_merged"]),
             ("pr_targets_default_branch", facts["pr_base_ref"] == facts["default_branch"]),
             ("pr_changes_code", facts["pr_additions"] > 0 and len(facts["files"]) > 0),
+            # authorship binding: the registered payout address must have been
+            # claimed by the PR's own author for THIS bounty — an opportunist
+            # who front-runs submit_pr with their own wallet cannot steer the
+            # reward away from the real contributor.
+            ("payout_claimed_by_pr_author", _claim_matches(facts["claim_comments"], bounty_id, b.payout_address)),
         ]
         for name, ok in checks:
             evidence["deterministic"].append({"check": name, "ok": bool(ok)})
@@ -574,9 +650,15 @@ class DevBounty(gl.Contract):
             _addr_hex(gl.message.sender_address) == b.poster, "only the poster may reclaim"
         )
         _require(
-            b.status in ("open", "submitted", "rejected"),
+            b.status in ("open", "rejected"),
             f"cannot reclaim bounty in status {b.status}",
         )
+        # "submitted" is deliberately NOT reclaimable: once a contributor has
+        # registered a PR + payout claim, letting the poster pull escrow out
+        # from under an in-flight verification is the race this must prevent.
+        # A rejected verification re-opens reclaim (past the deadline still
+        # applies); a 404-ing submission settles as rejected via the tolerant
+        # fact fetch, so escrow can never be locked by a dead submission.
         today = _date_str(_now())
         _require(today >= b.deadline_date, f"not yet expired; deadline {b.deadline_date}")
 

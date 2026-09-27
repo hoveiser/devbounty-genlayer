@@ -2,16 +2,21 @@
 """DevBounty live flow on GenLayer studionet.
 
 Scenario A (happy path, --mode approve, run against a FRESH contract):
-  create+fund a real bounty for hoveiser/devbounty-demo#1, submit the merged
-  fix PR #2, trigger multi-validator consensus verification, prove the payout
-  against the RECIPIENT BALANCE before vs after (never status fields alone).
+  create+fund a real bounty for hoveiser/devbounty-demo#1, post the PR-author
+  claim comment binding a fresh payout EOA (see scripts/github_claim.py),
+  submit the merged fix PR #2, trigger multi-validator consensus verification,
+  prove the payout against the RECIPIENT BALANCE before vs after (never status
+  fields alone).
 
-Scenario B (genuine AI-layer rejection, --mode reject, run against the OLD
-  contract that already holds funded bounty 000001 for the same issue):
-  submit merged PR #3 — a decorative README banner. All six deterministic
-  GitHub-fact checks pass (right repo, merged, default branch, real diff);
-  only the substantive LLM judgment can reject it. Proves the consensus AI
-  layer carries real settlement weight.
+Scenario B (genuine AI-layer rejection, --mode reject):
+  creates/adopts its own free bounty on the target contract, claims a payout
+  EOA via PR comment, then submits merged PR #3 — a decorative README banner.
+  All deterministic checks pass (right repo, merged, default branch, real
+  diff, author-claimed payout); only the substantive LLM judgment can reject
+  it. Proves the consensus AI layer carries real settlement weight.
+
+Both modes are self-contained and can run against the same contract: each
+adopts a free (open, unsubmitted) bounty or funds a new one.
 
 Every transaction hash is independently verified against the explorer's JSON
 API (studio.genlayer.com/api/explorer/... — not the HTML shell) and written
@@ -37,6 +42,8 @@ from pathlib import Path
 from eth_account import Account
 
 import genlayer_py as gl
+
+from github_claim import post_claim_comment
 
 ROOT = Path(__file__).resolve().parents[1]
 EXPLORER_API = "https://studio.genlayer.com/api/explorer/transactions/{tx}"
@@ -120,6 +127,12 @@ def main() -> int:
     if not key:
         print("GENLAYER_PRIVATE_KEY missing from environment/.env", file=sys.stderr)
         return 2
+    gh_token = os.environ.get("GITHUB_TOKEN") or load_env(ROOT / ".env").get(
+        "GITHUB_TOKEN"
+    )
+    if not gh_token:
+        print("GITHUB_TOKEN missing — required to post the PR-author claim", file=sys.stderr)
+        return 2
     acct = Account.from_key(key)
     client = gl.create_client(chain=gl.studionet, account=acct)
     contract = args.contract
@@ -184,30 +197,54 @@ def main() -> int:
     bal0 = int(client.get_balance(payout_addr))
     print(f"payout balance before : {bal0}")
 
-    # 1) bounty — approve mode creates+funds a fresh one (payable write WITH
-    #    native value; proves payable enforcement on the real network);
-    #    reject mode reuses the existing funded bounty 000001 on the old contract
-    if args.mode == "approve":
-        do_step(
-            "create_bounty",
-            lambda: client.write_contract(
-                contract, "create_bounty", args=[REPO_OWNER, REPO_NAME, ISSUE_NO, 30],
-                value=REWARD,
-            ),
-        )
+    # 1) bounty — each mode adopts a free (open, never-submitted) bounty on
+    #    the target contract or creates+funds one (payable write WITH native
+    #    value; proves payable enforcement on the real network). Both modes
+    #    can therefore share one contract: approve pays its bounty, reject
+    #    burns a second one through the AI layer.
+    def find_free_bounty():
         listing = read_view("list_bounties", ["", 0, 50])
-        bid = next(
-            (i["id"] for i in listing["items"] if i["repo"] == f"{REPO_OWNER}/{REPO_NAME}"),
+        return next(
+            (
+                i["id"]
+                for i in listing["items"]
+                if i["repo"] == f"{REPO_OWNER}/{REPO_NAME}"
+                and i["status"] == "open"
+                and not i["pr_url"]
+            ),
             None,
         )
-        assert bid, "bounty not found after create"
-        state["bid"] = bid
+
+    if "bid" in state:
+        bid = state["bid"]
     else:
-        bid = state.get("bid") or "000001"
-        b = read_view("get_bounty", [bid])
-        assert b and b.get("status") in ("open", "submitted", "rejected"), f"bad bounty: {b}"
+        bid = find_free_bounty()
+        if bid is None:
+            do_step(
+                "create_bounty",
+                lambda: client.write_contract(
+                    contract, "create_bounty", args=[REPO_OWNER, REPO_NAME, ISSUE_NO, 30],
+                    value=REWARD,
+                ),
+            )
+            bid = find_free_bounty()
+        assert bid, "no free bounty found after create"
+        state["bid"] = bid
     state_path.write_text(json.dumps(state, indent=2))
     print(f"bounty id             : {bid} status={read_view('get_bounty', [bid])['status']}")
+
+    # 1b) PR-author claim comment — the author-side step of the authorship
+    #     mitigation: without a comment from the PR author binding THIS payout
+    #     address to THIS bounty, verify_resolution rejects deterministically.
+    claim = f"devbounty-claim: bounty {bid} payout {payout_addr}"
+    scenario["pr_author_claim"] = claim
+    if state.get("claim") != claim:
+        post_claim_comment(gh_token, pr_url, bid, payout_addr)
+        state["claim"] = claim
+        state_path.write_text(json.dumps(state, indent=2))
+        print(f"claim comment posted  : on {pr_url}")
+    else:
+        print(f"claim comment         : already posted (resume)")
 
     # 2) contributor registers payout address + PR url
     if read_view("get_bounty", [bid])["status"] != "submitted" or "submit_pr" in state:

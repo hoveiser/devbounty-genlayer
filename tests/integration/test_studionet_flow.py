@@ -5,14 +5,15 @@ API and independently run the LLM judgment. The demo repo/issue/PR
 (hoveiser/devbounty-demo #1 fixed by merged PR #2) are real and permanent.
 
 Time-boxed: a full studionet round can take minutes per transaction; this
-test performs deploy -> funded create_bounty -> submit_pr -> verify_resolution
-and proves settlement against the RECIPIENT BALANCE via the same RPC client
-gltest uses internally.
+test performs deploy -> funded create_bounty -> PR-author claim comment ->
+submit_pr -> verify_resolution and proves settlement against the RECIPIENT
+BALANCE via the same RPC client gltest uses internally.
 
 Run:  gltest tests/integration/ -v -s --network studionet
 """
 
 import json
+import sys
 import time
 from pathlib import Path
 
@@ -26,6 +27,10 @@ from gltest.clients import get_gl_client
 from gltest.contracts.contract import Contract
 from gltest.utils import extract_contract_address
 from genlayer_py.types.transactions import TransactionStatus
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "scripts"))
+from github_claim import post_claim_comment  # noqa: E402
 
 REPO_OWNER = "hoveiser"
 REPO_NAME = "devbounty-demo"
@@ -69,6 +74,18 @@ def _deploy(factory, attempts=3):
     raise last
 
 
+def _github_token():
+    import os
+
+    tok = os.environ.get("GITHUB_TOKEN")
+    if not tok:
+        for line in (ROOT / ".env").read_text().splitlines():
+            if line.startswith("GITHUB_TOKEN="):
+                tok = line.split("=", 1)[1].strip()
+    assert tok, "GITHUB_TOKEN required to post the PR-author claim comment"
+    return tok
+
+
 @pytest.mark.slow
 def test_full_consensus_flow_on_studionet():
     trail = []
@@ -87,8 +104,12 @@ def test_full_consensus_flow_on_studionet():
     bid = listing["items"][0]["id"]
     assert listing["items"][0]["status"] == "open"
 
-    # contributor submits the real merged PR + fresh payout EOA
+    # contributor registers payout EOA: PR-author claim comment first (the
+    # authorship mitigation), then submit_pr with that address
     payout = Account.create()
+    claim = f"devbounty-claim: bounty {bid} payout {payout.address}"
+    post_claim_comment(_github_token(), PR_URL, bid, payout.address)
+    print("claim comment posted for", payout.address)
     res = contract.submit_pr(args=[bid, PR_URL, payout.address]).transact(
         wait_transaction_status=TransactionStatus.FINALIZED
     )
@@ -105,6 +126,16 @@ def test_full_consensus_flow_on_studionet():
     verdict = ev["verdict"]
     assert verdict, "no on-chain evidence stored"
     assert all(c["ok"] for c in verdict["deterministic"]), verdict["deterministic"]
+    check_names = {c["check"] for c in verdict["deterministic"]}
+    assert check_names == {
+        "issue_exists_and_is_issue",
+        "pr_number_matches_url",
+        "pr_targets_bounty_repo",
+        "pr_merged",
+        "pr_targets_default_branch",
+        "pr_changes_code",
+        "payout_claimed_by_pr_author",
+    }, check_names
     assert verdict["judgment"]["decision"] == "APPROVED", verdict["judgment"]
     assert verdict["final"] == "APPROVED"
     assert len(verdict["judgment"]["reasons"]) > 0
@@ -126,6 +157,7 @@ def test_full_consensus_flow_on_studionet():
             "ok": True,
         }
     })
+    trail.append({"pr_author_claim": claim})
     print("\nEVIDENCE:", json.dumps(verdict, indent=2)[:1200])
     out = Path(__file__).resolve().parents[2] / "evidence" / "integration_studionet.json"
     out.write_text(json.dumps({"chain": "studionet", "flow": trail,

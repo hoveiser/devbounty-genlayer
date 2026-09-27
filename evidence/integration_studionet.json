@@ -3,30 +3,33 @@
   "flow": [
     {
       "step": "deploy",
-      "contract": "0xA59aFBa5fc9A3D03607efDbD9d180aFE98019f77"
+      "contract": "0x96f2582c2Bc9202e8EEe7839e7dcb5DbfD57b571"
     },
     {
       "step": "create_bounty",
-      "tx": "0x0f0f1bb75882b40cab10b2b6ca8527c7714dca99f72460fde3f34e4d62327edf",
+      "tx": "0x1b20fc5a47f87c709ede014c0e1ae2e2931481845cb5c49a6237afb8b16f0616",
       "status": "FINALIZED"
     },
     {
       "step": "submit_pr",
-      "tx": "0x92db355419e5754b053815dc83b9561bd8bdaa6763342673d130ec0202680e39",
+      "tx": "0x9012a6ea6e6f78790e9e92ccb93c60dc7a4a18a5be3849e9b3a29754ea77257b",
       "status": "FINALIZED"
     },
     {
       "step": "verify_resolution",
-      "tx": "0x675d0c5a037d6435c0c1e7889b035770ae1c9ecf80d3c53367c03fdb17f96713",
+      "tx": "0x1a85ecebe7496eec3245e7f6e7184baad3c465ab5c28fa506d600a8406edca50",
       "status": "FINALIZED"
     },
     {
       "settlement_proof": {
-        "recipient": "0x6B9f3a983828d902eE88CCc8Bcbf80e681da6840",
+        "recipient": "0x360Bb1B999f640A6eAaaC08648891768021373DC",
         "balance": "1000000000000000000",
         "expected": "1000000000000000000",
         "ok": true
       }
+    },
+    {
+      "pr_author_claim": "devbounty-claim: bounty 000001 payout 0x360Bb1B999f640A6eAaaC08648891768021373DC"
     }
   ],
   "verdict": {
@@ -55,6 +58,10 @@
       {
         "check": "pr_changes_code",
         "ok": true
+      },
+      {
+        "check": "payout_claimed_by_pr_author",
+        "ok": true
       }
     ],
     "final": "APPROVED",
@@ -62,11 +69,11 @@
     "judgment": {
       "decision": "APPROVED",
       "reasons": [
-        "sum_range loop bounds were changed from range(1, n) to range(0, n + 1), which includes both 0 and n as required",
-        "a new test_math_utils.py file was added with regression tests for sum_range(0), sum_range(4), and sum_range(10), exactly matching the issue request"
+        "the loop bounds were corrected from range(1, n) to range(0, n + 1), fixing both the missing 0 and missing n.",
+        "regression tests for sum_range(0), sum_range(4), and sum_range(10) were added exactly as requested in the issue."
       ]
     },
     "pr_title": "Fix sum_range off-by-one bounds",
-    "verified_at": "2026-09-27T11:13:56.553314Z"
+    "verified_at": "2026-09-27T12:39:16.025090Z"
   }
 }
