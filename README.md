@@ -172,9 +172,12 @@ set asserted by name, payout EOA balance `0 → 1000000000000000000` atto.
 
 ## Security audit — gaps, fixes, proof
 
-Every item below was resolved with a **test that fails on the vulnerable
-behavior and passes on the fixed one** (run against the pre-fix contract to
-confirm the failure first, where applicable). Proof tests live in
+Every **gap** below (2 and 4) was resolved with a **test that fails on the
+vulnerable behavior and passes on the fixed one** (run against the pre-fix
+contract to confirm the failure first, where applicable). Rows 1, 3, 6, 6b and 7
+are *confirmations* — the code was already safe, and the cited tests now pin
+that (6/6b/7 were verified by mutation: deleting the `create_bounty` guards or
+softening the verdict comparison makes them fail). Proof tests live in
 [`tests/direct/test_security_audit.py`](tests/direct/test_security_audit.py).
 
 | # | Question | Verdict before | What was done | Proof |
@@ -184,6 +187,9 @@ confirm the failure first, where applicable). Proof tests live in
 | 3 | Double submission / double payout after PAID/REJECTED? | **Not a gap — state machine is closed.** `verify_resolution` only from `submitted`; `submit_pr` only from `open`/`rejected`; PAID and RECLAIMED are terminal. `b.status = "paid"` is written **before** `_emit_payout`, and GenLayer applies one tx's storage writes atomically at consensus — no intra-block re-entry window. | Hardened the *proof*, not the code: sequences asserting every re-entry reverts and exactly one `EthSend` is ever recorded; network runs prove single payout via recipient balance delta == reward, once. | `test_double_payout_is_impossible_on_a_settled_bounty`, `test_double_submission_while_pending_reverts`, `test_rejected_bounty_can_be_resubmitted_and_pays_once` |
 | 4 | Reclaim/appeal race — can the poster pull escrow out from under an in-flight or successful verification? | **REAL GAP.** `reclaim_after_timeout` accepted status `submitted`: past the deadline the poster could reclaim while a legit PR sat awaiting verification, stranding the contributor. (Post-settlement reclaim was already blocked; appeal was already one-shot from `rejected` only.) | **Fixed:** reclaim is allowed only from `open` or `rejected`. To close the *inverse* lock this creates (a griefer submitting a soon-to-404 PR keeping the bounty forever `submitted` and un-reclaimable), vanished issues/PRs now **settle as deterministic REJECTION** instead of reverting forever (tolerant 404 fact fetch) — so escrow can be neither stolen from a live submission nor frozen by a dead one. | `test_reclaim_blocked_while_submission_in_flight`, `test_vanished_pr_settles_rejected_instead_of_locking_escrow`, `test_reclaim_after_rejection_and_deadline_still_works`, `test_appeal_race_after_paid_is_closed` (+ older `test_reclaim_after_timeout`) |
 | 5 | Spam/griefing — trivial bounties to burn others' time/gas? | **Low severity, by design — no code fix (stated honestly).** Creating a bounty costs the poster *real escrow* (`value > 0`, their own GEN) which they can only recover via reclaim after their own chosen deadline — griefing capital is tied up, not free. And nobody is forced to trigger `verify_resolution`: it's called by an interested party (contributor/front-runner/appealer), never by the poster, so "burning gas on AI verifications" only ever burns the verifier's own gas on a bounty they *want* settled. The remaining cost imposed on third parties is list pollution (bounded: `list_bounties` paginates at 100), and validator attention during consensus rounds — inherent to any open bounty board. A deposit-with-slashing scheme was considered and rejected as over-engineering for this threat. | README note (this row); no test needed. |
+| 6 | Does `create_bounty` validate the repo/issue reference before locking value or writing state? | **Already safe — no gap.** All four guards run at the top of the method, strictly before the first storage write: `value > 0`, `_OWNER_RE` (`^[A-Za-z0-9._-]{1,100}$`) on owner **and** repo name, `_ISSUE_RE` (`^[1-9][0-9]{0,9}$`) on the issue number, and `1 <= reclaim_days <= 365`. Rejects empty, whitespace-padded, slash/path-traversal, over-100-char, and non-canonical numbers (`0`, `-1`, `000005`, `1e9`, 11 digits). Error type is the SDK's real `gl.vm.UserError`, tagged `[EXPECTED]` (deterministic business logic → validators must match it exactly). The value check is the *first* statement, so an unfunded bounty can never exist. | `test_create_bounty_rejects_malformed_reference_before_any_write` (14 cases, each also asserting `stats()`/`list_bounties()` are unchanged — no burned id, no stranded escrow), `test_create_bounty_rejects_malformed_reclaim_window` (5 cases), `test_create_bounty_accepts_the_reference_and_window_boundaries` (guards aren't over-broad), `test_zero_value_reverts_before_any_state_change`. Existing: `test_create_requires_value`, `test_create_validates_inputs`. |
+| 6b | Is a poster-supplied deadline validated as a future timestamp? | **No such parameter — cannot be malformed or past by construction.** The poster supplies `reclaim_days` (integer, validated 1..365), and `deadline_date` is computed on-chain as `_add_days(_now(), reclaim_days)` from `gl.message_raw["datetime"]` — so it is always strictly in the future. A raw timestamp can't be passed in at all, so there is nothing to fix. The established prefix-comparison approach is used on the *read* side: `reclaim_after_timeout` compares the `YYYY-MM-DD` prefix (`_date_str`) lexicographically against the stored deadline. | `test_create_bounty_accepts_the_reference_and_window_boundaries` pins day-exact arithmetic incl. a leap year (365d from 2028-01-01 → **2028-12-31**); `test_reclaim_after_timeout` pins the future-only gate. |
+| 7 | Any numeric tolerance in the consensus/equivalence logic? | **None — confirmed, and now pinned by a test.** Outcomes are binary: `strict_eq` compares whole fact dicts for exact equality; the comparative layer requires `theirs["decision"] == mine["decision"]` exactly; every deterministic check is a `bool`; money is `u256` atto with zero float anywhere in the contract. The only non-exact comparison is `_reasons_agree`, which requires ≥1 shared word between leader and validator **on the free-text reasons list** — it can only *reject* an otherwise-matching verdict, never approve a divergent one, so it cannot soften a payout. | `test_contract_source_contains_no_numeric_tolerance` (static guard: no `float`/`abs()`/`round()`/epsilon/ratio/tolerance/decimal literal in the contract source — verified to fail when a `abs(...) > 0.05` band is injected), `test_consensus_comparison_is_exact_even_for_the_closest_miss` (same reasons + flipped verdict ⇒ disagreement, verified to fail when the verdict gate is softened), `test_deterministic_checks_are_boolean_not_thresholded`. |
 
 The audit surfaced one design invariant worth restating: **any wallet may call
 `submit_pr`, but only the PR author's GitHub account can decide where its
@@ -201,8 +207,9 @@ frontend/build.mjs                 esbuild wrapper: bakes CONTRACT_ADDRESS + sta
 assets/logo.png                    512px square project logo (transparent), rendered by scripts/gen_icons.py
 .github/workflows/deploy-pages.yml CI: build frontend → deploy to GitHub Pages on every push to main
 tests/direct/test_devbounty.py     14 Direct-Mode unit tests (mocked GitHub/LLM) incl. injection test
-tests/direct/test_security_audit.py 14 security-audit proof tests (authorship race, reclaim race,
-                                   double-payout sequences, exact-value invariants)
+tests/direct/test_security_audit.py 38 security-audit proof cases (authorship race, reclaim race,
+                                   double-payout sequences, exact-value invariants, create_bounty
+                                   input validation, no-numeric-tolerance guards)
 tests/direct/devbounty_gh_mocks.py GitHub API mock helpers (incl. claim comments, 404 status overrides)
 tests/integration/                 gltest flow against REAL studionet consensus (no stubs)
 scripts/live_flow.py               the live scenario runner whose output is evidence/live_flow.json
@@ -226,7 +233,7 @@ python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
 #                        PR-author claim comment from the demo repo's author account)
 
 genvm-lint check contracts/DevBounty.py         # lint + validate
-pytest tests/direct/ -v                          # 28 tests, no network needed
+pytest tests/direct/ -v                          # 52 cases, no network needed
 
 # live flow on studionet (scenarios are resumable, state in evidence/; both modes
 # share one contract and include the claim-comment step):
@@ -338,12 +345,13 @@ Tooling / network layer:
 
 ## What each test tier proves — and doesn't
 
-* **Direct Mode** (`pytest tests/direct/`, 28 passing): business logic, access
+* **Direct Mode** (`pytest tests/direct/`, 52 cases passing): business logic, access
   control, guards, evidence shape, sanitizer + injection fail-closed, payout
   *emission* (EthSend recorded via hook), validator **comparison logic** via
   manual `run_validator` captures (agree / decision-disagree / LLM-error-disagree),
-  and the 14 security-audit proofs (front-runner claim rejection, reclaim-during-
-  submission revert, double-payout sequences, tolerant-404 rejection).
+  and the 38 security-audit proofs (front-runner claim rejection, reclaim-during-
+  submission revert, double-payout sequences, tolerant-404 rejection, `create_bounty`
+  input validation before any write, no-numeric-tolerance guards).
   It cannot prove: VM-level `@payable` enforcement, real multi-validator
   consensus, real balance movement, real GitHub/LLM behavior — hence the live
   flows below.
@@ -361,7 +369,7 @@ Tooling / network layer:
 - [x] Storage: `TreeMap`/`DynArray`/`u256` atto/`str` statuses only; no Enum, no float money, no bare `Exception` (all `gl.vm.UserError` with error taxonomy).
 - [x] Non-deterministic fetch extracts **only stable fields**; equivalence split: `strict_eq` (facts) vs genuine comparative rerun (judgment), decision + reasons compared, `[LLM]` error ⇒ disagree.
 - [x] Injection sanitization + dedicated trap-mock test that fails closed.
-- [x] Security audit (5 corner cases) resolved with **failing/passing proof tests**, not reasoning: two real gaps fixed (PR-authorship claim binding; reclaim blocked while `submitted`, with 404-settles-rejected closing the inverse lock), two invariants proven (exact value, closed state machine), one accepted risk documented — see [Security audit](#security-audit--gaps-fixes-proof).
+- [x] Security audit (8 items) settled with **failing/passing proof tests**, not reasoning: two real gaps fixed (PR-authorship claim binding; reclaim blocked while `submitted`, with 404-settles-rejected closing the inverse lock) and six confirmations of already-safe behavior — exact escrow value, closed state machine, griefing cost model, `create_bounty` reference/window validation before any write, the absence of a poster-supplied deadline timestamp, and the absence of numeric tolerance in consensus (the last three pinned by mutation-tested guards) — see [Security audit](#security-audit--gaps-fixes-proof).
 - [x] Payable real on studionet: 2 GEN in (`value_credited: true`), payout asserted via recipient **balances** before/after in both scenarios (approve pays 2 GEN; reject pays 0).
 - [x] Frontend uses the actually-installed `genlayer-js` API and reads **only real on-chain state** (verified in-browser: live rows, evidence, reasons, lifecycle; screenshot in `artifacts/`). No indexer, no mocks.
 - [x] Every tx hash verifiable via explorer **JSON API**; verification is scripted (`scripts/verify_evidence.py` — one-liner per hash).
