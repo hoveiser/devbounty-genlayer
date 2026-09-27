@@ -11,8 +11,16 @@ move money: APPROVED pays the contributor's registered address from escrow;
 otherwise the poster reclaims after a timeout. One appeal re-runs the whole
 verification with a fresh validator set.
 
-Live dapp frontend: [`frontend/`](frontend/) (plain HTML/JS + the official
-`genlayer-js` SDK, reading real on-chain state from studionet).
+Live dapp frontend: **[https://hoveiser.github.io/devbounty-genlayer/](https://hoveiser.github.io/devbounty-genlayer/)**
+— deployed via GitHub Pages, reading on-chain state directly from the public
+studionet RPC in the browser (no backend, no indexer). Source:
+[`frontend/`](frontend/) (plain HTML/JS + the official `genlayer-js` SDK).
+
+> The deployed bundle has the live contract address baked in **at build time**
+> (`CONTRACT_ADDRESS` env → esbuild `--define`, see
+> [`frontend/build.mjs`](frontend/build.mjs)); CI asserts it and rejects
+> placeholder builds. Auto-deployed on every push to `main` by
+> [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml).
 
 ![DevBounty frontend with live on-chain evidence](artifacts/devbounty_frontend_full.png)
 
@@ -143,6 +151,8 @@ create `0x0f0f1bb7…27edf` · submit `0x92db3554…80e39` · verify
 ```
 contracts/DevBounty.py            the intelligent contract (pinned runner header, lint-clean)
 frontend/                          plain HTML/CSS/JS dapp using genlayer-js (real SDK, see below)
+frontend/build.mjs                 esbuild wrapper: bakes CONTRACT_ADDRESS into the bundle
+.github/workflows/deploy-pages.yml CI: build frontend → deploy to GitHub Pages on every push to main
 tests/direct/                      14 Direct-Mode unit tests (mocked GitHub/LLM) incl. injection test
 tests/integration/                 gltest flow against REAL studionet consensus (no stubs)
 scripts/live_flow.py               the live scenario runner whose output is evidence/live_flow.json
@@ -170,9 +180,18 @@ pytest tests/direct/ -v                          # 14 tests, no network needed
 # integration test against real consensus (minutes per tx):
 .venv/bin/gltest tests/integration/ -v -s --network studionet
 
-# frontend
+# frontend (local)
 cd frontend && npm install && npm run build && python3 -m http.server 8765
 # open http://localhost:8765 — reads live state from the deployed contract
+# npm run build bakes in CONTRACT_ADDRESS (defaults to the live 0x6b81…65A3;
+# the Pages deploy workflow passes it explicitly).
+
+# deployed copy: https://hoveiser.github.io/devbounty-genlayer/
+# pushed to main → .github/workflows/deploy-pages.yml rebuilds and redeploys
+# via actions/deploy-pages. studio.genlayer.com sets CORS headers for the
+# Pages origin, so the static site reads the chain directly. (Note: the
+# studio RPC intermittently answers gen_call without ACAO under load — the
+# app self-recovers on the next auto-refresh cycle and keeps last-good rows.)
 ```
 
 `create_bounty` needs native GEN attached; the genlayer **CLI cannot attach
