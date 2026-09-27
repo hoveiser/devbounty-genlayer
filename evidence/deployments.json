@@ -1,0 +1,25 @@
+{
+  "note": "Both DevBounty instances deployed to GenLayer studionet by the genlayer CLI (v0.39.2) from account 0x3de43AA2f7162c80af98abe78222aE0Cdf83c506; consensus validator set and votes visible via the explorer JSON API on each deploy tx.",
+  "deployments": [
+    {
+      "role": "first deployment — used for the genuine REJECTION demo",
+      "contract": "0x9e76323f5c917af4A8931e0F8239183CADdF9D7f",
+      "deploy_tx": "0x4b8b8c09e5d80e57a116873fc9b385a5a0225d200ec327af35e797f2d395898a",
+      "consensus": "result MAJORITY_AGREE, 5 validators"
+    },
+    {
+      "role": "clean instance for the happy-path live flow",
+      "contract": "0x6b810DA81489834e383349187753ea1D0A9965A3",
+      "deploy_tx": "0xcdb3e992ae526cb3c1d18ba8ea88bc99f0790573066ed10c5e2f1dfe76cd0360",
+      "consensus": "result MAJORITY_AGREE, 5 validator votes in explorer JSON"
+    },
+    {
+      "role": "instance deployed by the gltest integration test (tests/integration/)",
+      "contract": "0xA59aFBa5fc9A3D03607efDbD9d180aFE98019f77",
+      "deploy_tx": null,
+      "consensus": "deploy reached FINALIZED via gltest; see evidence/integration_studionet.json for the flow tx hashes"
+    }
+  ],
+  "explorer_json_api": "https://studio.genlayer.com/api/explorer/transactions/<tx_hash>  (send a non-default User-Agent; the WAF 403s Python-urllib's default)",
+  "verify_command_example": "curl -sS -H 'User-Agent: devbounty/1.0' https://studio.genlayer.com/api/explorer/transactions/0x26562fd08ba5bd373e5ebbb98c580e01f8a7e88bb6e134d9fba4e0061a2578e7 | jq '.transaction.status, .transaction.consensus_data.votes'"
+}

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DevBounty — GenLayer studionet</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <header>
+    <h1>DevBounty <span class="sub">bounties for GitHub issue resolution, settled by GenLayer consensus</span></h1>
+    <div class="chainline">
+      chain: <b>studionet (61999)</b> · contract:
+      <code id="contract-addr"></code>
+      <input id="contract-input" placeholder="switch contract address" size="46" />
+      <button id="switch-contract">switch</button>
+    </div>
+  </header>
+
+  <section id="stats" class="statsbar">
+    <div>total <b id="st-total">–</b></div>
+    <div>active <b id="st-active">–</b></div>
+    <div>locked <b id="st-locked">–</b> GEN</div>
+    <div class="right"><span id="refresh-note"></span></div>
+  </section>
+
+  <main>
+    <section class="panel">
+      <h2>Bounties <button id="refresh">refresh</button></h2>
+      <table id="bounty-table">
+        <thead><tr><th>id</th><th>repo #issue</th><th>status</th><th>reward</th><th>deadline</th><th>verdict</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <p class="muted">All rows are read live from the intelligent contract via
+        <code>genlayer-js</code> <code>readContract</code> over the studionet RPC — no indexer, no cache.</p>
+    </section>
+
+    <section class="panel" id="detail">
+      <h2>Bounty detail</h2>
+      <p class="muted">select a bounty on the left</p>
+    </section>
+
+    <section class="panel" id="actions" hidden>
+      <h2>Transactions <span class="sub" id="act-who"></span></h2>
+      <div id="tx-lifecycle" hidden>
+        <div class="lifecycle">
+          <span class="stage" data-s="SUBMITTED">SUBMITTED</span><span class="arrow">→</span>
+          <span class="stage" data-s="PENDING">PENDING</span><span class="arrow">→</span>
+          <span class="stage" data-s="ACCEPTED">ACCEPTED</span><span class="arrow">→</span>
+          <span class="stage" data-s="FINALIZED">FINALIZED</span>
+        </div>
+        <div id="tx-note" class="mono"></div>
+      </div>
+      <form id="f-create"><h3>create &amp; fund a bounty <span class="payable">payable — sends GEN</span></h3>
+        <input name="owner" placeholder="repo owner" required value="hoveiser">
+        <input name="repo" placeholder="repo name" required value="devbounty-demo">
+        <input name="issue" placeholder="issue number" required value="1">
+        <input name="days" placeholder="reclaim days" required value="30">
+        <input name="gen" placeholder="reward GEN" required value="2">
+        <button type="submit">create_bounty</button>
+      </form>
+      <form id="f-submit"><h3>submit a merged PR</h3>
+        <input name="pr_url" placeholder="https://github.com/owner/repo/pull/N" required>
+        <input name="payout" placeholder="payout address 0x…" required>
+        <button type="submit">submit_pr</button>
+      </form>
+      <div id="write-buttons">
+        <button id="b-verify">verify_resolution (runs consensus AI verification)</button>
+        <button id="b-appeal">appeal (one shot)</button>
+        <button id="b-reclaim">reclaim_after_timeout</button>
+      </div>
+    </section>
+
+    <section class="panel" id="wallet">
+      <h2>Sign transactions</h2>
+      <p class="muted">private key stays in memory only; the page never stores or
+        transmits it anywhere except local transaction signing by <code>genlayer-js</code>.</p>
+      <input id="pk" type="password" placeholder="0x private key" size="50" />
+      <button id="connect">use key</button>
+      <button id="gen-key">new random account</button>
+      <span id="acct-note" class="mono"></span>
+    </section>
+  </main>
+
+  <footer>DevBounty · GenLayer Intelligent Contract · evidence of the exact flows shown here lives in <code>/evidence</code></footer>
+  <script type="module" src="./dist/app.js"></script>
+</body>
+</html>

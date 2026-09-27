@@ -1,0 +1,22 @@
+# --- python ---
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.gltest_cache/
+.gltest_artifacts/
+*.egg-info/
+
+# --- node / frontend ---
+node_modules/
+frontend/package-lock.json
+frontend/dist/
+
+# --- secrets & local scratch ---
+.env
+.scratch/
+*.key
+nohup.out
+
+# --- tooling noise ---
+artifacts/*.tmp

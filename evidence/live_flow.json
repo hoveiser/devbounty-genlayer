@@ -1,0 +1,228 @@
+{
+  "approve": {
+    "mode": "approve",
+    "contract": "0x6b810DA81489834e383349187753ea1D0A9965A3",
+    "chain": "studionet",
+    "pr_url": "https://github.com/hoveiser/devbounty-demo/pull/2",
+    "steps": [
+      {
+        "step": "create_bounty",
+        "tx": "0xba178784058c23483a9e3c397220c54d7778ac6c03c20398d11c46f5fe45a671",
+        "explorer": {
+          "hash": "0xba178784058c23483a9e3c397220c54d7778ac6c03c20398d11c46f5fe45a671",
+          "status": "FINALIZED",
+          "from": "0x3de43AA2f7162c80af98abe78222aE0Cdf83c506",
+          "to": "0x6b810DA81489834e383349187753ea1D0A9965A3",
+          "error": null,
+          "execution_status": null,
+          "validator_votes": {
+            "0x03D58A4DeF6fDFc032A56374785a5F571D07Bc11": "agree",
+            "0x14402D49f317CE1a2F35BAE01b1804A2A9703dCb": "agree",
+            "0x4aba638Cf0Cf5249437AaD968fC69dde46ae6BAC": "agree",
+            "0x5310dcF075E0BD47d29B8ec6581F736C767f54D2": "agree",
+            "0x76c25AFC12c75485703cCFfd0083AA6201455B25": "agree"
+          }
+        }
+      },
+      {
+        "step": "submit_pr",
+        "tx": "0x280d65b16513351fee7667f77f8fa91303667832802e57498a7abfeebd934cd6",
+        "explorer": {
+          "hash": "0x280d65b16513351fee7667f77f8fa91303667832802e57498a7abfeebd934cd6",
+          "status": "FINALIZED",
+          "from": "0x3de43AA2f7162c80af98abe78222aE0Cdf83c506",
+          "to": "0x6b810DA81489834e383349187753ea1D0A9965A3",
+          "error": null,
+          "execution_status": null,
+          "validator_votes": {
+            "0x3E5ee2507cc167C9925Bf10c67D7986581112024": "agree",
+            "0x76c25AFC12c75485703cCFfd0083AA6201455B25": "agree",
+            "0x9ea87b28DcA2F79fe108CF06a4c13B4c876AC23d": "idle",
+            "0xBBb165E4c9d73a1493D363280f7067Cd07891dBE": "idle",
+            "0xacc2459F341D7a887bcA8FAA62F1EC9378d4Bc67": "agree"
+          }
+        }
+      },
+      {
+        "step": "verify_resolution",
+        "tx": "0x26562fd08ba5bd373e5ebbb98c580e01f8a7e88bb6e134d9fba4e0061a2578e7",
+        "explorer": {
+          "hash": "0x26562fd08ba5bd373e5ebbb98c580e01f8a7e88bb6e134d9fba4e0061a2578e7",
+          "status": "FINALIZED",
+          "from": "0x3de43AA2f7162c80af98abe78222aE0Cdf83c506",
+          "to": "0x6b810DA81489834e383349187753ea1D0A9965A3",
+          "error": null,
+          "execution_status": null,
+          "validator_votes": {
+            "0x14402D49f317CE1a2F35BAE01b1804A2A9703dCb": "agree",
+            "0x5310dcF075E0BD47d29B8ec6581F736C767f54D2": "agree",
+            "0x9ea87b28DcA2F79fe108CF06a4c13B4c876AC23d": "agree",
+            "0xacc2459F341D7a887bcA8FAA62F1EC9378d4Bc67": "idle",
+            "0xcE1d6bBB36B744536153966B4DD42276f5ADd0F8": "idle"
+          }
+        }
+      }
+    ],
+    "onchain_evidence": {
+      "appeal_used": "",
+      "history": [
+        "{\"at\": \"2026-09-27T10:23:47.773224Z\", \"by\": \"0x3de43aa2f7162c80af98abe78222ae0cdf83c506\", \"event\": \"submitted\", \"pr_url\": \"https://github.com/hoveiser/devbounty-demo/pull/2\", \"pr_number\": \"2\"}",
+        "{\"at\": \"2026-09-27T10:33:13.432972Z\", \"event\": \"verified\", \"final\": \"APPROVED\"}"
+      ],
+      "status": "paid",
+      "verdict": {
+        "bounty_id": "000001",
+        "deterministic": [
+          {
+            "check": "issue_exists_and_is_issue",
+            "ok": true
+          },
+          {
+            "check": "pr_number_matches_url",
+            "ok": true
+          },
+          {
+            "check": "pr_targets_bounty_repo",
+            "ok": true
+          },
+          {
+            "check": "pr_merged",
+            "ok": true
+          },
+          {
+            "check": "pr_targets_default_branch",
+            "ok": true
+          },
+          {
+            "check": "pr_changes_code",
+            "ok": true
+          }
+        ],
+        "final": "APPROVED",
+        "issue_title": "sum_range skips the first and last element",
+        "judgment": {
+          "decision": "APPROVED",
+          "reasons": [
+            "changed range(1, n) to range(0, n + 1), correctly including 0 through n inclusive",
+            "added test_math_utils.py with regression tests for sum_range(0), sum_range(4), and sum_range(10) as requested",
+            "expected values match the issue: sum_range(4) now yields 10 instead of 6"
+          ]
+        },
+        "pr_title": "Fix sum_range off-by-one bounds",
+        "verified_at": "2026-09-27T10:33:13.432972Z"
+      }
+    },
+    "settlement_proof": {
+      "recipient": "0x631A3231555E111D3455392cE117D06ddF5e1405",
+      "before": "0",
+      "after": "2000000000000000000",
+      "delta": "2000000000000000000",
+      "expected": "2000000000000000000",
+      "ok": true,
+      "verdict_final": "APPROVED"
+    }
+  },
+  "reject": {
+    "mode": "reject",
+    "contract": "0x9e76323f5c917af4A8931e0F8239183CADdF9D7f",
+    "chain": "studionet",
+    "pr_url": "https://github.com/hoveiser/devbounty-demo/pull/3",
+    "steps": [
+      {
+        "step": "submit_pr",
+        "tx": "0x5795b9ef3298f61be0a7222e99a8c8cf21e069bf4116d4e19bc2b98093fac502",
+        "explorer": {
+          "hash": "0x5795b9ef3298f61be0a7222e99a8c8cf21e069bf4116d4e19bc2b98093fac502",
+          "status": "FINALIZED",
+          "from": "0x3de43AA2f7162c80af98abe78222aE0Cdf83c506",
+          "to": "0x9e76323f5c917af4A8931e0F8239183CADdF9D7f",
+          "error": null,
+          "execution_status": null,
+          "validator_votes": {
+            "0x3D83ab507785b95ca5C208bEc80CCe3D5ca98100": "agree",
+            "0x5310dcF075E0BD47d29B8ec6581F736C767f54D2": "idle",
+            "0x6737ca1d6BDF8b7C4f19143E2D55581Ca64eb7C3": "agree",
+            "0x76c25AFC12c75485703cCFfd0083AA6201455B25": "idle",
+            "0xBBb165E4c9d73a1493D363280f7067Cd07891dBE": "agree"
+          }
+        }
+      },
+      {
+        "step": "verify_resolution",
+        "tx": "0xbd06d05435cb38a96e020bc151215d980080d8b84099953b0ead15b7e0f86cb0",
+        "explorer": {
+          "hash": "0xbd06d05435cb38a96e020bc151215d980080d8b84099953b0ead15b7e0f86cb0",
+          "status": "FINALIZED",
+          "from": "0x3de43AA2f7162c80af98abe78222aE0Cdf83c506",
+          "to": "0x9e76323f5c917af4A8931e0F8239183CADdF9D7f",
+          "error": null,
+          "execution_status": null,
+          "validator_votes": {
+            "0x36728d2a123aB444E603EE5b2ad17d18Bb193557": "agree",
+            "0x3D83ab507785b95ca5C208bEc80CCe3D5ca98100": "idle",
+            "0x6737ca1d6BDF8b7C4f19143E2D55581Ca64eb7C3": "agree",
+            "0x772ffCd1dF6Cc566eC4b8d3f4F4f8eBbb6B36C84": "idle",
+            "0xE6BD8050758CB15fC88387223E31Ae2708B119dC": "agree"
+          }
+        }
+      }
+    ],
+    "onchain_evidence": {
+      "appeal_used": "",
+      "history": [
+        "{\"at\": \"2026-09-27T10:45:02.658786Z\", \"by\": \"0x3de43aa2f7162c80af98abe78222ae0cdf83c506\", \"event\": \"submitted\", \"pr_url\": \"https://github.com/hoveiser/devbounty-demo/pull/3\", \"pr_number\": \"3\"}",
+        "{\"at\": \"2026-09-27T10:45:46.818359Z\", \"event\": \"verified\", \"final\": \"REJECTED\"}"
+      ],
+      "status": "rejected",
+      "verdict": {
+        "bounty_id": "000001",
+        "deterministic": [
+          {
+            "check": "issue_exists_and_is_issue",
+            "ok": true
+          },
+          {
+            "check": "pr_number_matches_url",
+            "ok": true
+          },
+          {
+            "check": "pr_targets_bounty_repo",
+            "ok": true
+          },
+          {
+            "check": "pr_merged",
+            "ok": true
+          },
+          {
+            "check": "pr_targets_default_branch",
+            "ok": true
+          },
+          {
+            "check": "pr_changes_code",
+            "ok": true
+          }
+        ],
+        "final": "REJECTED",
+        "issue_title": "sum_range skips the first and last element",
+        "judgment": {
+          "decision": "REJECTED",
+          "reasons": [
+            "pr modifies only readme.md with an ascii banner",
+            "no changes to math_utils.py bounds or addition of test_math_utils.py as required by the issue"
+          ]
+        },
+        "pr_title": "docs: add ASCII banner to README",
+        "verified_at": "2026-09-27T10:45:46.818359Z"
+      }
+    },
+    "settlement_proof": {
+      "recipient": "0x15Abba34365745a493A73010a115AeeCB03eE30F",
+      "before": "0",
+      "after": "0",
+      "delta": "0",
+      "expected": "0",
+      "ok": true,
+      "verdict_final": "REJECTED"
+    }
+  }
+}

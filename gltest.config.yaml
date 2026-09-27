@@ -1,0 +1,20 @@
+# gltest.config.yaml — schema verified against gltest_cli 0.29.x source:
+# the ONLY valid root keys are networks / paths / environment (the docs'
+# top-level `contract_path` + bare network keys are rejected outright).
+paths:
+  contracts: contracts/
+  # gltest CLEARS the artifacts dir at every run — keep it away from our
+  # committed evidence in artifacts/ (deviation: docs never mention the wipe)
+  artifacts: .gltest_artifacts
+
+networks:
+  default: studionet
+  studionet:
+    # env-expanded by gltest; it auto-loads .env (gitignored), value never logged
+    accounts:
+      - "${GENLAYER_PRIVATE_KEY}"
+    # NOTE: default_wait_interval is in MILLISECONDS (startup log: "... 8 ms")
+    # studionet reaches real 5-validator consensus; FINALIZED can take many
+    # minutes per tx, so the wait windows are generous on purpose
+    default_wait_interval: 10000
+    default_wait_retries: 90

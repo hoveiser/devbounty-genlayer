@@ -1,0 +1,72 @@
+{
+  "chain": "studionet",
+  "flow": [
+    {
+      "step": "deploy",
+      "contract": "0xA59aFBa5fc9A3D03607efDbD9d180aFE98019f77"
+    },
+    {
+      "step": "create_bounty",
+      "tx": "0x0f0f1bb75882b40cab10b2b6ca8527c7714dca99f72460fde3f34e4d62327edf",
+      "status": "FINALIZED"
+    },
+    {
+      "step": "submit_pr",
+      "tx": "0x92db355419e5754b053815dc83b9561bd8bdaa6763342673d130ec0202680e39",
+      "status": "FINALIZED"
+    },
+    {
+      "step": "verify_resolution",
+      "tx": "0x675d0c5a037d6435c0c1e7889b035770ae1c9ecf80d3c53367c03fdb17f96713",
+      "status": "FINALIZED"
+    },
+    {
+      "settlement_proof": {
+        "recipient": "0x6B9f3a983828d902eE88CCc8Bcbf80e681da6840",
+        "balance": "1000000000000000000",
+        "expected": "1000000000000000000",
+        "ok": true
+      }
+    }
+  ],
+  "verdict": {
+    "bounty_id": "000001",
+    "deterministic": [
+      {
+        "check": "issue_exists_and_is_issue",
+        "ok": true
+      },
+      {
+        "check": "pr_number_matches_url",
+        "ok": true
+      },
+      {
+        "check": "pr_targets_bounty_repo",
+        "ok": true
+      },
+      {
+        "check": "pr_merged",
+        "ok": true
+      },
+      {
+        "check": "pr_targets_default_branch",
+        "ok": true
+      },
+      {
+        "check": "pr_changes_code",
+        "ok": true
+      }
+    ],
+    "final": "APPROVED",
+    "issue_title": "sum_range skips the first and last element",
+    "judgment": {
+      "decision": "APPROVED",
+      "reasons": [
+        "sum_range loop bounds were changed from range(1, n) to range(0, n + 1), which includes both 0 and n as required",
+        "a new test_math_utils.py file was added with regression tests for sum_range(0), sum_range(4), and sum_range(10), exactly matching the issue request"
+      ]
+    },
+    "pr_title": "Fix sum_range off-by-one bounds",
+    "verified_at": "2026-09-27T11:13:56.553314Z"
+  }
+}

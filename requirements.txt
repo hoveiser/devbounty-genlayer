@@ -1,0 +1,7 @@
+# GenLayer toolchain — versions verified working together on this repo
+# (note: genlayer-test pins genlayer-py down to 0.16.3; see README deviations)
+genlayer-test==0.29.2
+genlayer-py==0.16.3
+genvm-linter==0.11.0
+eth-account==0.14.0
+pytest==9.1.1
