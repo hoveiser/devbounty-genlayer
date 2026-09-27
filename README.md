@@ -22,7 +22,19 @@ studionet RPC in the browser (no backend, no indexer). Source:
 > placeholder builds. Auto-deployed on every push to `main` by
 > [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml).
 
+A dark “deep-slate” UI — system sans typography with a clear hierarchy, stat
+cards, a styled table, and **colour-coded status/verdict pills** (blue OPEN, amber
+SUBMITTED, green PAID/APPROVED, rose REJECTED), shimmer skeletons while the live
+reads resolve, and a responsive single-column layout on mobile. Original
+`<>`-coin mark as favicon (`frontend/assets/`) and 512px logo (`assets/logo.png`).
+All plain CSS / vanilla DOM on the existing esbuild bundle — no framework, no
+webfonts, no external CSS.
+
 ![DevBounty frontend with live on-chain evidence](artifacts/devbounty_frontend_full.png)
+
+| Mobile (390px) — same live data, fluid layout | |
+|---|---|
+| ![DevBounty mobile](artifacts/devbounty_frontend_mobile.png) | |
 
 ---
 
@@ -178,7 +190,10 @@ permissionless verification model.
 ```
 contracts/DevBounty.py            the intelligent contract (pinned runner header, lint-clean)
 frontend/                          plain HTML/CSS/JS dapp using genlayer-js (real SDK, see below)
-frontend/build.mjs                 esbuild wrapper: bakes CONTRACT_ADDRESS into the bundle
+frontend/style.css                 dark "deep-slate" theme: typography, stat cards, status pills, skeletons, responsive
+frontend/assets/                   favicon.svg + .ico + png sizes + apple-touch-icon (original <>-coin mark)
+frontend/build.mjs                 esbuild wrapper: bakes CONTRACT_ADDRESS + stages assets into the Pages artifact
+assets/logo.png                    512px square project logo (transparent), rendered by scripts/gen_icons.py
 .github/workflows/deploy-pages.yml CI: build frontend → deploy to GitHub Pages on every push to main
 tests/direct/test_devbounty.py     14 Direct-Mode unit tests (mocked GitHub/LLM) incl. injection test
 tests/direct/test_security_audit.py 14 security-audit proof tests (authorship race, reclaim race,
@@ -189,8 +204,9 @@ scripts/live_flow.py               the live scenario runner whose output is evid
 scripts/github_claim.py            posts the real PR-author claim comment (used by live_flow + integration)
 scripts/deploy_contract.py         SDK deploy to studionet + explorer FINALIZED poll
 scripts/verify_evidence.py         re-verifies every recorded hash against the explorer JSON API
+scripts/gen_icons.py               renders the favicon/logo rasters from the SVG mark geometry (PIL)
 evidence/                          deployments.json, live_flow.json, integration_studionet.json, run states
-artifacts/                         frontend screenshot
+artifacts/                         frontend screenshots (desktop + mobile)
 gltest.config.yaml                 gltest network config (studionet, env-expanded key)
 ```
 

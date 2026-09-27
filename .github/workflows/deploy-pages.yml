@@ -46,6 +46,7 @@ jobs:
           grep -q "$CONTRACT_ADDRESS" dist/app.js
           grep -q "https://studio.genlayer.com/api" dist/app.js
           ! grep -q 0x6b810DA81489834e383349187753ea1D0A9965A3 dist/app.js
+          test -s site/favicon.ico && test -s site/favicon.svg && test -s site/assets/apple-touch-icon.png
       - uses: actions/upload-pages-artifact@v3
         with:
           path: frontend/site

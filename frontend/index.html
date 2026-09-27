@@ -3,35 +3,71 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0B1220" />
   <title>DevBounty — GenLayer studionet</title>
+  <link rel="icon" href="./favicon.ico" sizes="any" />
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
   <header>
-    <h1>DevBounty <span class="sub">bounties for GitHub issue resolution, settled by GenLayer consensus</span></h1>
+    <div class="brand-row">
+      <svg class="logo" width="44" height="44" viewBox="0 0 1024 1024" aria-hidden="true">
+        <rect x="36" y="36" width="952" height="952" rx="212" fill="#0F1829" stroke="#24344F" stroke-width="34" />
+        <polyline points="392,326 230,512 392,698" fill="none" stroke="#5B8CFF" stroke-width="76" stroke-linecap="round" stroke-linejoin="round" />
+        <polyline points="632,326 794,512 632,698" fill="none" stroke="#5B8CFF" stroke-width="76" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="512" cy="512" r="124" fill="#F7B23B" stroke="#B4761A" stroke-width="26" />
+        <circle cx="512" cy="512" r="48" fill="#8A5A10" />
+      </svg>
+      <div class="brand-text">
+        <h1>DevBounty</h1>
+        <p class="tagline">Bounties for GitHub issue resolution, settled by GenLayer consensus</p>
+      </div>
+      <span class="chain-pill">
+        <span class="dot"></span>studionet · 61999
+      </span>
+    </div>
     <div class="chainline">
-      chain: <b>studionet (61999)</b> · contract:
-      <code id="contract-addr"></code>
-      <input id="contract-input" placeholder="switch contract address" size="46" />
-      <button id="switch-contract">switch</button>
+      contract <code id="contract-addr"></code>
+      <input id="contract-input" placeholder="switch contract address" />
+      <button id="switch-contract" class="ghost">switch</button>
     </div>
   </header>
 
   <section id="stats" class="statsbar">
-    <div>total <b id="st-total">–</b></div>
-    <div>active <b id="st-active">–</b></div>
-    <div>locked <b id="st-locked">–</b> GEN</div>
-    <div class="right"><span id="refresh-note"></span></div>
+    <div class="stat">
+      <span class="stat-label">Bounties</span>
+      <span class="stat-value" id="st-total">–</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">Active</span>
+      <span class="stat-value accent" id="st-active">–</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">GEN locked</span>
+      <span class="stat-value gold" id="st-locked">–<small> GEN</small></span>
+    </div>
+    <div class="stat refresh">
+      <span class="stat-label">Storage</span>
+      <span id="refresh-note">connecting to studionet…</span>
+    </div>
   </section>
 
   <main>
     <section class="panel">
-      <h2>Bounties <button id="refresh">refresh</button></h2>
-      <table id="bounty-table">
-        <thead><tr><th>id</th><th>repo #issue</th><th>status</th><th>reward</th><th>deadline</th><th>verdict</th></tr></thead>
-        <tbody></tbody>
-      </table>
-      <p class="muted">All rows are read live from the intelligent contract via
+      <h2>Bounties <button id="refresh" class="ghost">refresh</button></h2>
+      <div class="table-wrap">
+        <table id="bounty-table">
+          <thead><tr><th>id</th><th>repo · issue</th><th>status</th><th>reward</th><th class="col-deadline">deadline</th><th class="col-verdict">verdict</th></tr></thead>
+          <tbody>
+            <tr class="skeleton-row"><td colspan="6"><span class="sk sk-line sk-w70"></span></td></tr>
+            <tr class="skeleton-row"><td colspan="6"><span class="sk sk-line sk-w55"></span></td></tr>
+            <tr class="skeleton-row"><td colspan="6"><span class="sk sk-line sk-w80"></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted tiny">All rows are read live from the intelligent contract via
         <code>genlayer-js</code> <code>readContract</code> over the studionet RPC — no indexer, no cache.</p>
     </section>
 
@@ -41,7 +77,7 @@
     </section>
 
     <section class="panel" id="actions" hidden>
-      <h2>Transactions <span class="sub" id="act-who"></span></h2>
+      <h2>Transactions <span class="sub mono" id="act-who"></span></h2>
       <div id="tx-lifecycle" hidden>
         <div class="lifecycle">
           <span class="stage" data-s="SUBMITTED">SUBMITTED</span><span class="arrow">→</span>
@@ -65,8 +101,8 @@
         <button type="submit">submit_pr</button>
       </form>
       <div id="write-buttons">
-        <button id="b-verify">verify_resolution (runs consensus AI verification)</button>
-        <button id="b-appeal">appeal (one shot)</button>
+        <button id="b-verify">verify_resolution <small>runs consensus AI verification</small></button>
+        <button id="b-appeal">appeal <small>one shot</small></button>
         <button id="b-reclaim">reclaim_after_timeout</button>
       </div>
     </section>
@@ -75,10 +111,12 @@
       <h2>Sign transactions</h2>
       <p class="muted">private key stays in memory only; the page never stores or
         transmits it anywhere except local transaction signing by <code>genlayer-js</code>.</p>
-      <input id="pk" type="password" placeholder="0x private key" size="50" />
-      <button id="connect">use key</button>
-      <button id="gen-key">new random account</button>
-      <span id="acct-note" class="mono"></span>
+      <div class="rowish">
+        <input id="pk" type="password" placeholder="0x private key" />
+        <button id="connect">use key</button>
+        <button id="gen-key" class="ghost">new random account</button>
+        <span id="acct-note" class="mono"></span>
+      </div>
     </section>
   </main>
 

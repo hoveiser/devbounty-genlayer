@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- DevBounty mark: code brackets around a bounty coin, on a deep-slate tile -->
+  <rect x="36" y="36" width="952" height="952" rx="212" fill="#0F1829" stroke="#24344F" stroke-width="34"/>
+  <polyline points="392,326 230,512 392,698" fill="none" stroke="#5B8CFF" stroke-width="76" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="632,326 794,512 632,698" fill="none" stroke="#5B8CFF" stroke-width="76" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="512" cy="512" r="124" fill="#F7B23B" stroke="#B4761A" stroke-width="26"/>
+  <circle cx="512" cy="512" r="48" fill="#8A5A10"/>
+</svg>

@@ -1,12 +1,12 @@
 // Build script: bundles the app and bakes the live studionet contract address
 // into the output via an esbuild --define, then stages the static site that
-// GitHub Pages serves (index.html + style.css + dist/app.js).
+// GitHub Pages serves (index.html + style.css + dist/app.js + icon assets).
 //
 //   CONTRACT_ADDRESS=0x... node build.mjs
 //
 // Falls back to the current live deployment when unset (local dev).
 import { build } from 'esbuild';
-import { cpSync, mkdirSync } from 'node:fs';
+import { cpSync, mkdirSync, rmSync } from 'node:fs';
 
 const CONTRACT_ADDRESS =
   process.env.CONTRACT_ADDRESS ?? '0xADA36bF3F8f0d147B03f7D02B3778746CFCBfCeB';
@@ -25,9 +25,17 @@ await build({
 });
 
 // stage the Pages artifact: keep index.html's ./style.css and ./dist/app.js paths intact
+rmSync('site', { recursive: true, force: true });
 mkdirSync('site/dist', { recursive: true });
 cpSync('index.html', 'site/index.html');
 cpSync('style.css', 'site/style.css');
 cpSync('dist/app.js', 'site/dist/app.js');
+// icon assets: ./assets/* (apple-touch-icon, png sizes) + favicon at root so
+// the browser's automatic /devbounty-genlayer/favicon.ico request also hits
+// the new mark instead of GitHub's default star
+mkdirSync('site/assets', { recursive: true });
+cpSync('assets', 'site/assets', { recursive: true });
+cpSync('assets/favicon.ico', 'site/favicon.ico');
+cpSync('assets/favicon.svg', 'site/favicon.svg');
 
 console.log(`built dist/app.js + site/ with CONTRACT_ADDRESS = ${CONTRACT_ADDRESS}`);
