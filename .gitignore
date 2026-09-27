@@ -9,8 +9,8 @@ __pycache__/
 
 # --- node / frontend ---
 node_modules/
-frontend/package-lock.json
 frontend/dist/
+frontend/site/
 
 # --- secrets & local scratch ---
 .env

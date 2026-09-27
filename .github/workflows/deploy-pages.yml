@@ -1,0 +1,61 @@
+name: Deploy frontend to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # The live studionet deployment baked into the Pages bundle at build time
+    env:
+      CONTRACT_ADDRESS: "0x6b810DA81489834e383349187753ea1D0A9965A3"
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      # The live studionet contract address is baked into the bundle at build
+      # time (esbuild --define via build.mjs) — the site reads on-chain state
+      # directly from the studio.genlayer.com RPC in the browser.
+      - name: Build static site
+        run: npm run build
+      - name: Verify the bundle targets the live studionet deployment
+        # the zero address only exists as the unset-fallback branch, so a real
+        # address in the bundle can only come from the esbuild --define above;
+        # the studio RPC must be baked in from chains.studionet
+        run: |
+          grep -q "$CONTRACT_ADDRESS" dist/app.js
+          grep -q "https://studio.genlayer.com/api" dist/app.js
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -14,7 +14,15 @@
 import { createClient, createAccount, generatePrivateKey, chains } from 'genlayer-js';
 import { transactionsStatusNumberToName, transactionResultNumberToName } from 'genlayer-js/types';
 
-const CONTRACT_DEFAULT = '0x6b810DA81489834e383349187753ea1D0A9965A3';
+// __CONTRACT_ADDRESS__ is injected at build time by build.mjs (esbuild --define)
+// from the CONTRACT_ADDRESS env var — this is how the GitHub Pages bundle gets
+// the live studionet deployment baked in instead of a localhost default.
+// The zero-address fallback only appears if a build forgot to pass one; CI
+// asserts the real address is present in the bundle.
+const CONTRACT_DEFAULT =
+  typeof __CONTRACT_ADDRESS__ !== 'undefined'
+    ? __CONTRACT_ADDRESS__
+    : '0x0000000000000000000000000000000000000000';
 const EXPLORER_JSON = 'https://studio.genlayer.com/api/explorer/transactions/';
 const LIFECYCLE = ['SUBMITTED', 'PENDING', 'ACCEPTED', 'FINALIZED'];
 

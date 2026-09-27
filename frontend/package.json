@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "esbuild src/main.js --bundle --format=esm --target=es2022 --outfile=dist/app.js",
+    "build": "node build.mjs",
     "serve": "python3 -m http.server 8765"
   },
   "keywords": [],
