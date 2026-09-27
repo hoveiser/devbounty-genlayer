@@ -16,6 +16,11 @@ Live dapp frontend: **[https://hoveiser.github.io/devbounty-genlayer/](https://h
 studionet RPC in the browser (no backend, no indexer). Source:
 [`frontend/`](frontend/) (plain HTML/JS + the official `genlayer-js` SDK).
 
+**▶ 70-second demo** (burned-in captions; live dapp + repo; no audio track —
+offline TTS was unavailable in the build environment):
+[watch on the release](https://github.com/hoveiser/devbounty-genlayer/releases/tag/demo-video)
+· file [`evidence/demo.mp4`](evidence/demo.mp4).
+
 > The deployed bundle has the live contract address baked in **at build time**
 > (`CONTRACT_ADDRESS` env → esbuild `--define`, see
 > [`frontend/build.mjs`](frontend/build.mjs)); CI asserts it and rejects
