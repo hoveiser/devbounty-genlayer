@@ -1,74 +1,74 @@
 {
   "approve": {
     "mode": "approve",
-    "contract": "0xADA36bF3F8f0d147B03f7D02B3778746CFCBfCeB",
+    "contract": "0x0C1A6EB4288440d356a03393FE6b5F999bF075f9",
     "chain": "studionet",
     "pr_url": "https://github.com/hoveiser/devbounty-demo/pull/2",
     "steps": [
       {
         "step": "create_bounty",
-        "tx": "0x057dc2c36cc3d91d2ceab377bcb0c76523f082723b460982ab15caeac62b4b2e",
+        "tx": "0xe9e1e8b5f104b8e4659de817c2083f34a2d8258cd1eef7285968394d03350421",
         "explorer": {
-          "hash": "0x057dc2c36cc3d91d2ceab377bcb0c76523f082723b460982ab15caeac62b4b2e",
+          "hash": "0xe9e1e8b5f104b8e4659de817c2083f34a2d8258cd1eef7285968394d03350421",
           "status": "FINALIZED",
           "from": "0x3de43AA2f7162c80af98abe78222aE0Cdf83c506",
-          "to": "0xADA36bF3F8f0d147B03f7D02B3778746CFCBfCeB",
+          "to": "0x0C1A6EB4288440d356a03393FE6b5F999bF075f9",
           "error": null,
           "execution_status": null,
           "validator_votes": {
-            "0x03D58A4DeF6fDFc032A56374785a5F571D07Bc11": "idle",
-            "0x4404Fb70d490c935758146f42A73DC850FF95C71": "idle",
+            "0x3D83ab507785b95ca5C208bEc80CCe3D5ca98100": "agree",
+            "0x3E5ee2507cc167C9925Bf10c67D7986581112024": "idle",
             "0xDB1c35c1f05d885999b8f13e5735307BcC16Be88": "agree",
-            "0xE6BD8050758CB15fC88387223E31Ae2708B119dC": "agree",
-            "0xacc2459F341D7a887bcA8FAA62F1EC9378d4Bc67": "agree"
+            "0xacc2459F341D7a887bcA8FAA62F1EC9378d4Bc67": "agree",
+            "0xec2Fb79cd12255Eb34886CEd7332f27B98DEe658": "idle"
           }
         }
       },
       {
         "step": "submit_pr",
-        "tx": "0x2a611fcaf41e1f9ee9370a51dd0cd48c0463120a4068848745ad79a13e3f8015",
+        "tx": "0x5543e371a5da4215968b085a8b81667ea846bb6a6f8fd4f7175dbfd2dce6da67",
         "explorer": {
-          "hash": "0x2a611fcaf41e1f9ee9370a51dd0cd48c0463120a4068848745ad79a13e3f8015",
+          "hash": "0x5543e371a5da4215968b085a8b81667ea846bb6a6f8fd4f7175dbfd2dce6da67",
           "status": "FINALIZED",
           "from": "0x3de43AA2f7162c80af98abe78222aE0Cdf83c506",
-          "to": "0xADA36bF3F8f0d147B03f7D02B3778746CFCBfCeB",
+          "to": "0x0C1A6EB4288440d356a03393FE6b5F999bF075f9",
           "error": null,
           "execution_status": null,
           "validator_votes": {
-            "0x03D58A4DeF6fDFc032A56374785a5F571D07Bc11": "idle",
-            "0x36728d2a123aB444E603EE5b2ad17d18Bb193557": "agree",
-            "0x4404Fb70d490c935758146f42A73DC850FF95C71": "idle",
-            "0x76c25AFC12c75485703cCFfd0083AA6201455B25": "agree",
-            "0xcE1d6bBB36B744536153966B4DD42276f5ADd0F8": "agree"
+            "0x03D58A4DeF6fDFc032A56374785a5F571D07Bc11": "agree",
+            "0x5310dcF075E0BD47d29B8ec6581F736C767f54D2": "agree",
+            "0x76c25AFC12c75485703cCFfd0083AA6201455B25": "idle",
+            "0x772ffCd1dF6Cc566eC4b8d3f4F4f8eBbb6B36C84": "agree",
+            "0xec2Fb79cd12255Eb34886CEd7332f27B98DEe658": "agree"
           }
         }
       },
       {
         "step": "verify_resolution",
-        "tx": "0xc5a8a682fbbd121244b16042ff5b2617af5af9488f6a466add8f02aa44a6e51f",
+        "tx": "0x1f5749cbca4a6c0f6826c9e951054d22466725bbb3cda8838e358486464dac16",
         "explorer": {
-          "hash": "0xc5a8a682fbbd121244b16042ff5b2617af5af9488f6a466add8f02aa44a6e51f",
+          "hash": "0x1f5749cbca4a6c0f6826c9e951054d22466725bbb3cda8838e358486464dac16",
           "status": "FINALIZED",
           "from": "0x3de43AA2f7162c80af98abe78222aE0Cdf83c506",
-          "to": "0xADA36bF3F8f0d147B03f7D02B3778746CFCBfCeB",
+          "to": "0x0C1A6EB4288440d356a03393FE6b5F999bF075f9",
           "error": null,
           "execution_status": null,
           "validator_votes": {
-            "0x14402D49f317CE1a2F35BAE01b1804A2A9703dCb": "idle",
-            "0x76c25AFC12c75485703cCFfd0083AA6201455B25": "agree",
-            "0xDB1c35c1f05d885999b8f13e5735307BcC16Be88": "agree",
-            "0xE6BD8050758CB15fC88387223E31Ae2708B119dC": "agree",
-            "0xcE1d6bBB36B744536153966B4DD42276f5ADd0F8": "idle"
+            "0x14402D49f317CE1a2F35BAE01b1804A2A9703dCb": "agree",
+            "0x4aba638Cf0Cf5249437AaD968fC69dde46ae6BAC": "agree",
+            "0x5310dcF075E0BD47d29B8ec6581F736C767f54D2": "idle",
+            "0x6737ca1d6BDF8b7C4f19143E2D55581Ca64eb7C3": "agree",
+            "0xec2Fb79cd12255Eb34886CEd7332f27B98DEe658": "idle"
           }
         }
       }
     ],
-    "pr_author_claim": "devbounty-claim: bounty 000001 payout 0x731916c53E726631A91fCA0D8224f5a810dFCd5f",
+    "pr_author_claim": "devbounty-claim: bounty 000001 payout 0x5DfF91aBCc85bD87B1dB06bd113581ca5A30a817",
     "onchain_evidence": {
       "appeal_used": "",
       "history": [
-        "{\"at\": \"2026-09-27T12:44:52.749396Z\", \"by\": \"0x3de43aa2f7162c80af98abe78222ae0cdf83c506\", \"event\": \"submitted\", \"pr_url\": \"https://github.com/hoveiser/devbounty-demo/pull/2\", \"pr_number\": \"2\"}",
-        "{\"at\": \"2026-09-27T12:45:37.389214Z\", \"event\": \"verified\", \"final\": \"APPROVED\"}"
+        "{\"at\": \"2026-09-30T11:29:32.750302Z\", \"by\": \"0x3de43aa2f7162c80af98abe78222ae0cdf83c506\", \"event\": \"submitted\", \"pr_url\": \"https://github.com/hoveiser/devbounty-demo/pull/2\", \"pr_number\": \"2\"}",
+        "{\"at\": \"2026-09-30T11:30:17.714933Z\", \"event\": \"verified\", \"final\": \"APPROVED\"}"
       ],
       "status": "paid",
       "verdict": {
@@ -108,16 +108,15 @@
         "judgment": {
           "decision": "APPROVED",
           "reasons": [
-            "corrected range to include 0 and n, fixing off\u2011by\u2011one bug",
-            "added regression tests for sum_range(0), sum_range(4), and sum_range(10) as requested"
+            "the pr updates sum_range to use range(0, n+1), fixing the off\u2011by\u2011one bug, and adds the requested regression tests for n=0, 4, and 10."
           ]
         },
         "pr_title": "Fix sum_range off-by-one bounds",
-        "verified_at": "2026-09-27T12:45:37.389214Z"
+        "verified_at": "2026-09-30T11:30:17.714933Z"
       }
     },
     "settlement_proof": {
-      "recipient": "0x731916c53E726631A91fCA0D8224f5a810dFCd5f",
+      "recipient": "0x5DfF91aBCc85bD87B1dB06bd113581ca5A30a817",
       "before": "0",
       "after": "2000000000000000000",
       "delta": "2000000000000000000",
@@ -128,74 +127,74 @@
   },
   "reject": {
     "mode": "reject",
-    "contract": "0xADA36bF3F8f0d147B03f7D02B3778746CFCBfCeB",
+    "contract": "0x0C1A6EB4288440d356a03393FE6b5F999bF075f9",
     "chain": "studionet",
     "pr_url": "https://github.com/hoveiser/devbounty-demo/pull/3",
     "steps": [
       {
         "step": "create_bounty",
-        "tx": "0x1e0e2ed83bfe3414514f0e57a317680682a99af227420d3ad2d790f34f3af756",
+        "tx": "0xcddf3adcf70fd633b66122f96e321f5ac2b0fadd73ede90321c34955f89997f0",
         "explorer": {
-          "hash": "0x1e0e2ed83bfe3414514f0e57a317680682a99af227420d3ad2d790f34f3af756",
+          "hash": "0xcddf3adcf70fd633b66122f96e321f5ac2b0fadd73ede90321c34955f89997f0",
           "status": "FINALIZED",
           "from": "0x3de43AA2f7162c80af98abe78222aE0Cdf83c506",
-          "to": "0xADA36bF3F8f0d147B03f7D02B3778746CFCBfCeB",
+          "to": "0x0C1A6EB4288440d356a03393FE6b5F999bF075f9",
           "error": null,
           "execution_status": null,
           "validator_votes": {
-            "0x4EDbE1FC9EAeC7b0EBA849b0C76AE73Eb0ad5C47": "agree",
-            "0xBBb165E4c9d73a1493D363280f7067Cd07891dBE": "agree",
-            "0xE6BD8050758CB15fC88387223E31Ae2708B119dC": "agree",
-            "0xacc2459F341D7a887bcA8FAA62F1EC9378d4Bc67": "agree",
-            "0xcE1d6bBB36B744536153966B4DD42276f5ADd0F8": "agree"
+            "0x14402D49f317CE1a2F35BAE01b1804A2A9703dCb": "agree",
+            "0x772ffCd1dF6Cc566eC4b8d3f4F4f8eBbb6B36C84": "idle",
+            "0x90402341F0B0e97b23023c0a87de957FB7148E0F": "agree",
+            "0x9ea87b28DcA2F79fe108CF06a4c13B4c876AC23d": "agree",
+            "0xDB1c35c1f05d885999b8f13e5735307BcC16Be88": "idle"
           }
         }
       },
       {
         "step": "submit_pr",
-        "tx": "0xd8bdad10f8a9c953fff4e0da42e71f606169701d5d83e637d8e3bd90fc537096",
+        "tx": "0x8cb9acb21c9d951450d0165d89929314951a1377f5603b75449e01ccd7a374e1",
         "explorer": {
-          "hash": "0xd8bdad10f8a9c953fff4e0da42e71f606169701d5d83e637d8e3bd90fc537096",
+          "hash": "0x8cb9acb21c9d951450d0165d89929314951a1377f5603b75449e01ccd7a374e1",
           "status": "FINALIZED",
           "from": "0x3de43AA2f7162c80af98abe78222aE0Cdf83c506",
-          "to": "0xADA36bF3F8f0d147B03f7D02B3778746CFCBfCeB",
+          "to": "0x0C1A6EB4288440d356a03393FE6b5F999bF075f9",
           "error": null,
           "execution_status": null,
           "validator_votes": {
             "0x14402D49f317CE1a2F35BAE01b1804A2A9703dCb": "agree",
-            "0x76c25AFC12c75485703cCFfd0083AA6201455B25": "agree",
-            "0x9ea87b28DcA2F79fe108CF06a4c13B4c876AC23d": "agree",
-            "0xBBb165E4c9d73a1493D363280f7067Cd07891dBE": "agree",
-            "0xcE1d6bBB36B744536153966B4DD42276f5ADd0F8": "agree"
+            "0x4aba638Cf0Cf5249437AaD968fC69dde46ae6BAC": "idle",
+            "0x772ffCd1dF6Cc566eC4b8d3f4F4f8eBbb6B36C84": "idle",
+            "0xacc2459F341D7a887bcA8FAA62F1EC9378d4Bc67": "agree",
+            "0xec2Fb79cd12255Eb34886CEd7332f27B98DEe658": "agree"
           }
         }
       },
       {
         "step": "verify_resolution",
-        "tx": "0x2cfdf1ba4e5ef5c6ab32b195f2b23906b80dcbea9c40c5438e68b81b5640848b",
+        "tx": "0x981d2b5e5eee0a8db56f9f7dec6fcd851eeaad79a9d96db8107f5afce64fe78f",
         "explorer": {
-          "hash": "0x2cfdf1ba4e5ef5c6ab32b195f2b23906b80dcbea9c40c5438e68b81b5640848b",
+          "hash": "0x981d2b5e5eee0a8db56f9f7dec6fcd851eeaad79a9d96db8107f5afce64fe78f",
           "status": "FINALIZED",
           "from": "0x3de43AA2f7162c80af98abe78222aE0Cdf83c506",
-          "to": "0xADA36bF3F8f0d147B03f7D02B3778746CFCBfCeB",
+          "to": "0x0C1A6EB4288440d356a03393FE6b5F999bF075f9",
           "error": null,
           "execution_status": null,
           "validator_votes": {
-            "0x4aba638Cf0Cf5249437AaD968fC69dde46ae6BAC": "agree",
-            "0x6737ca1d6BDF8b7C4f19143E2D55581Ca64eb7C3": "idle",
-            "0x76c25AFC12c75485703cCFfd0083AA6201455B25": "agree",
-            "0x90402341F0B0e97b23023c0a87de957FB7148E0F": "agree",
-            "0xacc2459F341D7a887bcA8FAA62F1EC9378d4Bc67": "idle"
+            "0x14402D49f317CE1a2F35BAE01b1804A2A9703dCb": "agree",
+            "0x36728d2a123aB444E603EE5b2ad17d18Bb193557": "idle",
+            "0x3E5ee2507cc167C9925Bf10c67D7986581112024": "idle",
+            "0x5310dcF075E0BD47d29B8ec6581F736C767f54D2": "agree",
+            "0xacc2459F341D7a887bcA8FAA62F1EC9378d4Bc67": "agree"
           }
         }
       }
     ],
-    "pr_author_claim": "devbounty-claim: bounty 000002 payout 0x3DF0ACEC104c75b8393849C1157b942A134e72C2",
+    "pr_author_claim": "devbounty-claim: bounty 000002 payout 0x8c5E49722B8D6D678258044d3CFA9028Ace13A50",
     "onchain_evidence": {
       "appeal_used": "",
       "history": [
-        "{\"at\": \"2026-09-27T12:48:41.234025Z\", \"by\": \"0x3de43aa2f7162c80af98abe78222ae0cdf83c506\", \"event\": \"submitted\", \"pr_url\": \"https://github.com/hoveiser/devbounty-demo/pull/3\", \"pr_number\": \"3\"}",
-        "{\"at\": \"2026-09-27T12:49:25.819912Z\", \"event\": \"verified\", \"final\": \"REJECTED\"}"
+        "{\"at\": \"2026-09-30T11:34:50.638794Z\", \"by\": \"0x3de43aa2f7162c80af98abe78222ae0cdf83c506\", \"event\": \"submitted\", \"pr_url\": \"https://github.com/hoveiser/devbounty-demo/pull/3\", \"pr_number\": \"3\"}",
+        "{\"at\": \"2026-09-30T11:35:35.610899Z\", \"event\": \"verified\", \"final\": \"REJECTED\"}"
       ],
       "status": "rejected",
       "verdict": {
@@ -235,17 +234,15 @@
         "judgment": {
           "decision": "REJECTED",
           "reasons": [
-            "the pull request does not address the issue described. the issue is about fixing the `sum_range` function's incorrect bounds, but the pr only adds an ascii bann",
-            "no changes were made to `math_utils.py` or any test files as requested in the issue.",
-            "the pr is unrelated to the problem of the off-by-one error in `sum_range`."
+            "the pr only adds a decorative ascii banner to readme.md and does not fix the off-by-one bug in math_utils.py or add any regression tests as required by the issu"
           ]
         },
         "pr_title": "docs: add ASCII banner to README",
-        "verified_at": "2026-09-27T12:49:25.819912Z"
+        "verified_at": "2026-09-30T11:35:35.610899Z"
       }
     },
     "settlement_proof": {
-      "recipient": "0x3DF0ACEC104c75b8393849C1157b942A134e72C2",
+      "recipient": "0x8c5E49722B8D6D678258044d3CFA9028Ace13A50",
       "before": "0",
       "after": "0",
       "delta": "0",

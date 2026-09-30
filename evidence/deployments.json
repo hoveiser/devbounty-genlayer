@@ -1,11 +1,37 @@
 {
-  "note": "DevBounty instances deployed to GenLayer studionet from account 0x3de43AA2f7162c80af98abe78222aE0Cdf83c506 (genlayer CLI v0.39.2 or genlayer-py deploy_contract); consensus validator set and votes visible via the explorer JSON API on each deploy tx. The 0x6b81/0x9e76 instances predate the Sep 27 security audit (PR-authorship claim + reclaim-race fixes). 0xADA3 was the audited live instance; it is superseded by 0x0C1A, redeployed with the two reviewer fixes (reclaim liveness with a bounded verification grace, and canonical fail-closed verdict parsing). 0x0C1A is the instance powering the live demo and the GitHub Pages frontend; 0x96f2 is the integration-test instance.",
+  "note": "DevBounty instances deployed to GenLayer studionet from account 0x3de43AA2f7162c80af98abe78222aE0Cdf83c506 (genlayer CLI v0.39.2 or genlayer-py deploy_contract); consensus validator set and votes visible via the explorer JSON API on each deploy tx. The 0x6b81/0x9e76 instances predate the Sep 27 security audit (PR-authorship claim + reclaim-race fixes). 0xADA3 was the audited live instance; it is superseded by 0x0C1A, redeployed with the two reviewer fixes (reclaim liveness with a bounded verification grace, and canonical fail-closed verdict parsing). 0x0C1A is the instance powering the live demo and the GitHub Pages frontend; 0x96f2 is the integration-test instance. On Sep 30 the two settled demo bounties were re-run on 0x0C1A (live_bounties below): 000001 paid/APPROVED and 000002 rejected, matching the walkthrough. 0xADA3 keeps the historical pre-redeploy demo data.",
   "deployments": [
     {
       "role": "redeploy with the two reviewer fixes, powering the live frontend and demo",
       "contract": "0x0C1A6EB4288440d356a03393FE6b5F999bF075f9",
       "deploy_tx": "0xb478cee75137d7ed80bf40f585d18b3321e19be943123c67f162575ece46eaf5",
-      "consensus": "FINALIZED, 4 validator votes agree + 1 idle in explorer JSON"
+      "consensus": "FINALIZED, 4 validator votes agree + 1 idle in explorer JSON",
+      "live_bounties": [
+        {
+          "id": "000001",
+          "status": "paid",
+          "verdict_final": "APPROVED",
+          "deterministic_checks_green": "7/7",
+          "pr_url": "https://github.com/hoveiser/devbounty-demo/pull/2",
+          "payout_eoa": "0x5DfF91aBCc85bD87B1dB06bd113581ca5A30a817",
+          "balance_delta_atto": "2000000000000000000",
+          "create_tx": "0xe9e1e8b5f104b8e4659de817c2083f34a2d8258cd1eef7285968394d03350421",
+          "submit_tx": "0x5543e371a5da4215968b085a8b81667ea846bb6a6f8fd4f7175dbfd2dce6da67",
+          "verify_tx": "0x1f5749cbca4a6c0f6826c9e951054d22466725bbb3cda8838e358486464dac16"
+        },
+        {
+          "id": "000002",
+          "status": "rejected",
+          "verdict_final": "REJECTED",
+          "deterministic_checks_green": "7/7",
+          "pr_url": "https://github.com/hoveiser/devbounty-demo/pull/3",
+          "payout_eoa": "0x8c5E49722B8D6D678258044d3CFA9028Ace13A50",
+          "balance_delta_atto": "0",
+          "create_tx": "0xcddf3adcf70fd633b66122f96e321f5ac2b0fadd73ede90321c34955f89997f0",
+          "submit_tx": "0x8cb9acb21c9d951450d0165d89929314951a1377f5603b75449e01ccd7a374e1",
+          "verify_tx": "0x981d2b5e5eee0a8db56f9f7dec6fcd851eeaad79a9d96db8107f5afce64fe78f"
+        }
+      ]
     },
     {
       "role": "audited contract that powered the live demo and frontend before the reviewer-fix redeploy (historical)",

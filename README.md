@@ -122,35 +122,35 @@ issue **#1** documents an off-by-one in `sum_range`; **PR #2** (merged, squash)
 fixes it and adds regression tests; **PR #3** (merged) is a decorative README
 ASCII banner *deliberately unrelated* to the issue.
 
-Both scenarios below run against the **security-audited** deployment
-(`0xADA3…fCeB`) and include the PR-author claim comment step of the
-authorship mitigation.
+Both scenarios below were re-run against the **reviewer-fix redeploy**
+(`0x0C1A…75f9`), the instance that powers the live frontend, and include the
+PR-author claim comment step of the authorship mitigation.
 
-### Scenario A — genuine fix pays out (audited contract `0xADA3…fCeB`)
+### Scenario A: genuine fix pays out (reviewer-fix redeploy `0x0C1A…75f9`)
 
 | step | tx | explorer verdict |
 |---|---|---|
-| deploy | `0x3e83c129…f5dd` | FINALIZED · 5 validator votes |
-| `create_bounty` **with 2 GEN native value** | `0x057dc2c3…4b2e` | FINALIZED · votes all `agree` |
-| PR-author claim comment on PR #2 (GitHub side, `bounty 000001 payout 0x7319…Cd5f`) | — | visible on the public PR |
-| `submit_pr` (PR #2) | `0x2a611fca…8015` | FINALIZED |
-| `verify_resolution` | `0xc5a8a682…e51f` | FINALIZED |
+| deploy | `0xb478cee7…eaf5` | FINALIZED · 4 votes agree + 1 idle |
+| `create_bounty` **with 2 GEN native value** | `0xe9e1e8b5…0421` | FINALIZED · votes all `agree` |
+| PR-author claim comment on PR #2 (GitHub side, `bounty 000001 payout 0x5DfF…a817`) | (GitHub, not a tx) | visible on the public PR |
+| `submit_pr` (PR #2) | `0x5543e371…da67` | FINALIZED |
+| `verify_resolution` | `0x1f5749cb…ac16` | FINALIZED |
 
 **Settlement proven against the recipient's balance, not a status field:**
-payout EOA `0x7319…Cd5f` went `0 → 2000000000000000000` atto (delta exactly
+payout EOA `0x5DfF…a817` went `0 → 2000000000000000000` atto (delta exactly
 the escrowed 2 GEN). On-chain evidence stores the **seven** deterministic
 checks (six GitHub facts + `payout_claimed_by_pr_author`), the LLM
-`decision: APPROVED` and its **reason list** — visible in the live frontend.
+`decision: APPROVED` and its **reason list**, visible in the live frontend.
 
-### Scenario B — merged-but-unsubstantive PR is rejected by the AI layer (same audited contract, bounty `000002`)
+### Scenario B: merged-but-unsubstantive PR rejected by the AI layer (same reviewer-fix redeploy, bounty `000002`)
 
 Fresh 2 GEN bounty; contributor claims + submits **PR #3** (README banner).
 
 | step | tx | result |
 |---|---|---|
-| `create_bounty` (2 GEN) | `0x1e0e2ed8…f756` | FINALIZED |
-| claim comment + `submit_pr` | `0xd8bdad10…7096` | FINALIZED |
-| `verify_resolution` | `0x2cfdf1ba…848b` | FINALIZED |
+| `create_bounty` (2 GEN) | `0xcddf3adc…97f0` | FINALIZED |
+| claim comment + `submit_pr` | `0x8cb9acb2…74e1` | FINALIZED |
+| `verify_resolution` | `0x981d2b5e…e78f` | FINALIZED |
 
 On-chain evidence: **all seven deterministic checks ✓** (right repo ✓, merged
 ✓, default branch ✓, real diff ✓, **author-claimed payout ✓**) — and the
@@ -250,8 +250,8 @@ pytest tests/direct/ -v                          # 52 cases, no network needed
 # frontend (local)
 cd frontend && npm install && npm run build && python3 -m http.server 8765
 # open http://localhost:8765 — reads live state from the deployed contract
-# npm run build bakes in CONTRACT_ADDRESS (defaults to the live audited
-# 0xADA3…fCeB; the Pages deploy workflow passes it explicitly).
+# npm run build bakes in CONTRACT_ADDRESS (defaults to the live reviewer-fix
+# redeploy 0x0C1A…75f9; the Pages deploy workflow passes it explicitly).
 
 # deployed copy: https://hoveiser.github.io/devbounty-genlayer/
 # pushed to main → .github/workflows/deploy-pages.yml rebuilds and redeploys
