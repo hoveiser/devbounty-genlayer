@@ -10,13 +10,18 @@ One section per audit point (README "Security audit" table maps to these):
    a "devbounty-claim: bounty <id> payout <addr>" comment on the PR, checked
    deterministically. Front-running, fake-claim and cross-bounty replay attacks
    all end REJECTED with zero transfers.
-3. double submission /
-   double payout           — every second action on a settled bounty reverts;
-   exactly one EthSend per bounty can ever be recorded.
-4. reclaim/appeal race     — reclaim is blocked while a submission is in
-   flight ("submitted"), even past the deadline; vanished PRs (HTTP 404)
-   settle as REJECTED instead of reverting forever, so escrow can be neither
-   stolen from a live submission nor locked by a dead one.
+3. multi submission /
+   double payout          - pending submissions are bounded (one per submitter,
+   MAX_PENDING total); a settled bounty reverts every re-entry, and exactly one
+   EthSend per bounty can ever be recorded.
+4. reclaim liveness /
+   appeal race            - an on-time submission that verifies successfully
+   becomes a paid bounty and permanently blocks reclaim; a submission that never
+   verifies, whether from a transient GitHub failure or junk, defers the poster's
+   reclaim only for a bounded grace window and then expires. Post-deadline
+   submissions are rejected at entry and leave no state, and vanished PRs (HTTP
+   404) settle as REJECTED instead of reverting forever, so escrow can be neither
+   stolen from a live submission nor stranded by a dead or unavailable one.
 5. spam/griefing           — README note only (create requires real escrow,
    reclaim returns it; verification is opt-in for third parties).
 6. create_bounty input
@@ -27,6 +32,7 @@ One section per audit point (README "Security audit" table maps to these):
    no float, epsilon, ratio or percentage band anywhere in the agreement path.
 """
 
+import datetime
 import json
 import re
 
@@ -50,6 +56,18 @@ from devbounty_gh_mocks import (
 
 ATTACKER = "0x2222222222222222222222222222222222222222"
 ONE_GEN = 10**18
+# mirror the contract's reclaim-liveness bounds so test timelines stay in step
+GRACE_DAYS = 3
+MAX_PENDING = 5
+
+
+def _shift_date(days: int, iso_date: str) -> str:
+    """Civil-day arithmetic mirroring the contract, for deterministic timelines."""
+    return (datetime.date.fromisoformat(iso_date) + datetime.timedelta(days=days)).isoformat()
+
+
+def _ts(iso_date: str) -> str:
+    return iso_date + "T00:00:00Z"
 
 
 @pytest.fixture()
@@ -239,11 +257,31 @@ def test_double_payout_is_impossible_on_a_settled_bounty(
     assert posted.get_bounty("000001")["status"] == "paid"
 
 
-def test_double_submission_while_pending_reverts(posted, direct_vm, direct_bob, direct_charlie):
+def test_same_submitter_cannot_stack_pending_but_others_can(
+    posted, direct_vm, direct_bob, direct_charlie
+):
+    """Spam control is per submitter, not a global lock on the bounty: one
+    wallet cannot pile up duplicate pending submissions, yet a different
+    contributor may still file their own claim while another is in flight."""
     _submit(posted, direct_vm, direct_bob)
-    direct_vm.sender = direct_charlie
-    with direct_vm.expect_revert("cannot submit for bounty in status submitted"):
+    direct_vm.sender = direct_bob
+    with direct_vm.expect_revert("already have a pending submission"):
         posted.submit_pr("000001", PR_URL, ATTACKER)
+    direct_vm.sender = direct_charlie
+    res = posted.submit_pr("000001", PR_URL, PAYOUT)
+    assert res["status"] == "submitted" and res["pending"] == 2
+
+
+def test_pending_submission_cap_bounds_state(posted, direct_vm, direct_accounts):
+    """A griefer cannot grow state past MAX_PENDING: once the queue is full,
+    further on-time submissions revert, so junk cannot bloat escrow."""
+    for wallet in direct_accounts[:MAX_PENDING]:
+        direct_vm.sender = wallet
+        posted.submit_pr("000001", PR_URL, PAYOUT)
+    direct_vm.sender = direct_accounts[MAX_PENDING]
+    with direct_vm.expect_revert("pending submission cap reached"):
+        posted.submit_pr("000001", PR_URL, PAYOUT)
+    assert posted.get_bounty("000001")["status"] == "submitted"
 
 
 def test_rejected_bounty_can_be_resubmitted_and_pays_once(
@@ -272,20 +310,22 @@ def test_rejected_bounty_can_be_resubmitted_and_pays_once(
 # ==================================================== 4. reclaim/appeal race ==
 
 
-def test_reclaim_blocked_while_submission_in_flight(
+def test_on_time_verified_submission_blocks_reclaim_within_grace(
     posted, direct_vm, direct_alice, direct_bob
 ):
-    """The exact audited sequence: contributor submits a genuine PR, the poster
-    waits out the deadline and tries to pull the escrow out from under the
-    pending verification. Reclaim must revert — and the contributor's payout
-    must still work afterwards."""
+    """No-regression for the original race: a genuine on-time submission keeps
+    escrow locked while verification is still possible (up to the bounded grace
+    window), pays the contributor, then stays permanently reclaim blocked as a
+    paid bounty."""
     _submit(posted, direct_vm, direct_bob)
-    warp_to(direct_vm, "2027-01-01T00:00:00Z")  # long past the 30-day deadline
-    direct_vm.sender = direct_alice  # the poster
-    with direct_vm.expect_revert("cannot reclaim bounty in status submitted"):
+    deadline = posted.get_bounty("000001")["deadline_date"]
+    # at the deadline verification is still open, so the poster may not reclaim
+    warp_to(direct_vm, _ts(deadline))
+    direct_vm.sender = direct_alice
+    with direct_vm.expect_revert("verification grace"):
         posted.reclaim_after_timeout("000001")
 
-    # verification completes normally and pays the contributor:
+    # the submission verifies successfully and pays inside the window:
     mock_github(direct_vm)
     mock_llm_default(direct_vm, "APPROVED")
     transfers = install_payout_hook(direct_vm)
@@ -296,6 +336,72 @@ def test_reclaim_blocked_while_submission_in_flight(
     direct_vm.sender = direct_alice
     with direct_vm.expect_revert("cannot reclaim bounty in status paid"):
         posted.reclaim_after_timeout("000001")
+
+
+def test_post_deadline_submission_is_rejected_and_leaves_no_state(
+    posted, direct_vm, direct_bob
+):
+    """Task 1 entry gate: a submission after the deadline is refused outright
+    and cannot create in-flight state to delay the poster's reclaim."""
+    deadline = posted.get_bounty("000001")["deadline_date"]
+    warp_to(direct_vm, _ts(_shift_date(1, deadline)))
+    direct_vm.sender = direct_bob
+    with direct_vm.expect_revert("submission after deadline"):
+        posted.submit_pr("000001", PR_URL, PAYOUT)
+    b = posted.get_bounty("000001")
+    assert b["status"] == "open"
+    assert b["pr_url"] == "" and b["submitter"] == ""
+    assert b["history"] == []
+
+
+def test_transient_failure_then_junk_never_strands_escrow(
+    posted, direct_vm, direct_alice, direct_bob, direct_charlie, direct_owner
+):
+    """Reviewer's scenario end to end: GitHub verification is unavailable
+    (transient 5xx), then the same and other addresses repeatedly submit around
+    the deadline and past it. None of it may strand escrow. After the grace
+    window closes the poster reclaims, and no contributor is ever paid."""
+    transfers = install_payout_hook(direct_vm)
+    deadline = posted.get_bounty("000001")["deadline_date"]
+
+    # 1) an on-time submission cannot verify while GitHub is down: the transient
+    #    error reverts the whole tx and leaves the submission unverified
+    _submit(posted, direct_vm, direct_bob)
+    mock_github(direct_vm, issue_status=500)
+    direct_vm.sender = direct_charlie  # any third party may trigger verification
+    with direct_vm.expect_revert("[TRANSIENT]"):
+        posted.verify_resolution("000001")
+    assert posted.get_bounty("000001")["status"] == "submitted"
+    direct_vm.clear_mocks()
+
+    # 2) repeated junk just before and exactly at the deadline: the same wallet
+    #    is blocked by the per-submitter rule, other wallets append bounded state
+    warp_to(direct_vm, _ts(_shift_date(-1, deadline)))
+    direct_vm.sender = direct_bob
+    with direct_vm.expect_revert("already have a pending submission"):
+        posted.submit_pr("000001", PR_URL, ATTACKER)
+    direct_vm.sender = direct_charlie
+    posted.submit_pr("000001", PR_URL, ATTACKER)
+    warp_to(direct_vm, _ts(deadline))
+    direct_vm.sender = direct_owner
+    posted.submit_pr("000001", PR_URL, ATTACKER)
+
+    # 3) past the deadline, submissions are rejected at entry and leave no state
+    warp_to(direct_vm, _ts(_shift_date(1, deadline)))
+    with direct_vm.expect_revert("submission after deadline"):
+        posted.submit_pr("000001", PR_URL, ATTACKER)
+
+    # 4) once the grace window closes, verification is expired and cannot pay,
+    #    while the poster's reclaim succeeds regardless of how much junk landed
+    warp_to(direct_vm, _ts(_shift_date(GRACE_DAYS + 1, deadline)))
+    direct_vm.sender = direct_charlie
+    with direct_vm.expect_revert("verification window closed"):
+        posted.verify_resolution("000001")
+    direct_vm.sender = direct_alice
+    res = posted.reclaim_after_timeout("000001")
+    assert res["status"] == "reclaimed"
+    # not one contributor payout ever happened: only the poster was repaid
+    assert transfers == [{"address": hex_of(direct_alice), "value": REWARD, "kind": "eth_send"}]
 
 
 def test_reclaim_after_rejection_and_deadline_still_works(

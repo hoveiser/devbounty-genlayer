@@ -162,7 +162,10 @@ def mock_github(
 
 
 def llm_verdict(decision, reasons=("implements the fix described in the issue",)):
-    return json.dumps({"decision": decision, "reasons": list(reasons)})
+    # Emit the canonical structure the contract now parses: a single `verdict`
+    # field whose value is exactly APPROVE or REJECT. Display reasons stay.
+    verdict = "APPROVE" if str(decision).upper().startswith("APPROVE") else "REJECT"
+    return json.dumps({"verdict": verdict, "reasons": list(reasons)})
 
 
 def mock_llm_default(direct_vm, decision, reasons=None):

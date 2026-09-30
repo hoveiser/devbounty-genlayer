@@ -18,10 +18,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     # The live studionet deployment baked into the Pages bundle at build time
-    # (security-audited redeploy; the earlier 0x6b81… instance stays on-chain
-    # but predates the authorship-claim and reclaim-race fixes)
+    # (redeploy carrying the two reviewer fixes: reclaim liveness and canonical
+    # fail-closed verdict parsing; the earlier security-audited 0xADA3 instance
+    # stays on-chain as historical evidence)
     env:
-      CONTRACT_ADDRESS: "0xADA36bF3F8f0d147B03f7D02B3778746CFCBfCeB"
+      CONTRACT_ADDRESS: "0x0C1A6EB4288440d356a03393FE6b5F999bF075f9"
     defaults:
       run:
         working-directory: frontend

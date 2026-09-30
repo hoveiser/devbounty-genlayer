@@ -1,8 +1,14 @@
 {
-  "note": "DevBounty instances deployed to GenLayer studionet from account 0x3de43AA2f7162c80af98abe78222aE0Cdf83c506 (genlayer CLI v0.39.2 or genlayer-py deploy_contract); consensus validator set and votes visible via the explorer JSON API on each deploy tx. The 0x6b81/0x9e76 instances predate the Sep 27 security audit (PR-authorship claim + reclaim-race fixes) and are kept as historical evidence; the audited instances are 0xADA3 (live demo + frontend) and 0x96f2 (integration test).",
+  "note": "DevBounty instances deployed to GenLayer studionet from account 0x3de43AA2f7162c80af98abe78222aE0Cdf83c506 (genlayer CLI v0.39.2 or genlayer-py deploy_contract); consensus validator set and votes visible via the explorer JSON API on each deploy tx. The 0x6b81/0x9e76 instances predate the Sep 27 security audit (PR-authorship claim + reclaim-race fixes). 0xADA3 was the audited live instance; it is superseded by 0x0C1A, redeployed with the two reviewer fixes (reclaim liveness with a bounded verification grace, and canonical fail-closed verdict parsing). 0x0C1A is the instance powering the live demo and the GitHub Pages frontend; 0x96f2 is the integration-test instance.",
   "deployments": [
     {
-      "role": "audited contract powering the live demo scenarios A/B and the GitHub Pages frontend",
+      "role": "redeploy with the two reviewer fixes, powering the live frontend and demo",
+      "contract": "0x0C1A6EB4288440d356a03393FE6b5F999bF075f9",
+      "deploy_tx": "0xb478cee75137d7ed80bf40f585d18b3321e19be943123c67f162575ece46eaf5",
+      "consensus": "FINALIZED, 4 validator votes agree + 1 idle in explorer JSON"
+    },
+    {
+      "role": "audited contract that powered the live demo and frontend before the reviewer-fix redeploy (historical)",
       "contract": "0xADA36bF3F8f0d147B03f7D02B3778746CFCBfCeB",
       "deploy_tx": "0x3e83c1291b76d452104a140f453a7828a3a17204d10c72c0eedfd6dbd8ecf5dd",
       "consensus": "FINALIZED, 5 validator votes in explorer JSON"
