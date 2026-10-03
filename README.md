@@ -237,7 +237,7 @@ python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt
 #                        PR-author claim comment from the demo repo's author account)
 
 genvm-lint check contracts/DevBounty.py         # lint + validate
-pytest tests/direct/ -v                          # 52 cases, no network needed
+pytest tests/direct/ -v                          # 77 cases (14 + 41 + 22), no network needed
 
 # live flow on studionet (scenarios are resumable, state in evidence/; both modes
 # share one contract and include the claim-comment step):
@@ -349,11 +349,11 @@ Tooling / network layer:
 
 ## What each test tier proves — and doesn't
 
-* **Direct Mode** (`pytest tests/direct/`, 52 cases passing): business logic, access
+* **Direct Mode** (`pytest tests/direct/`, 77 cases passing): business logic, access
   control, guards, evidence shape, sanitizer + injection fail-closed, payout
   *emission* (EthSend recorded via hook), validator **comparison logic** via
   manual `run_validator` captures (agree / decision-disagree / LLM-error-disagree),
-  and the 38 security-audit proofs (front-runner claim rejection, reclaim-during-
+  and the 41 security-audit proofs (front-runner claim rejection, reclaim-during-
   submission revert, double-payout sequences, tolerant-404 rejection, `create_bounty`
   input validation before any write, no-numeric-tolerance guards).
   It cannot prove: VM-level `@payable` enforcement, real multi-validator
